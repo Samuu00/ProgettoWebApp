@@ -1,0 +1,182 @@
+<html lang="it">
+<head>
+  <title>Recipe Detail</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+  <main class="det-page-container">
+    <div class="det-blob det-b1"></div>
+    <div class="det-blob det-b2"></div>
+    <div class="det-blob det-b3"></div>
+
+    <span class="det-sketch det-icon-1">🍲</span>
+    <span class="det-sketch det-icon-2">🧂</span>
+    <span class="det-sketch det-icon-3">🍷</span>
+    <span class="det-sketch det-icon-4">🥦</span>
+
+    <div class="det-content-wrapper">
+      @if (loading) {
+        <div class="det-status-card">
+          <div class="det-loader">🍳</div>
+          <p>Lo Chef sta preparando i dettagli...</p>
+        </div>
+      }
+
+      @if (ricetta && !loading) {
+        <article class="det-card">
+          <div class="det-image-wrapper">
+            <img [src]="ricetta.immagineURL" [alt]="ricetta.titolo">
+            <span class="det-badge-diff">{{ ricetta.difficolta }}</span>
+          </div>
+
+          <div class="det-main-body">
+            <header class="det-header">
+              <div class="det-title-row">
+                <h1>{{ ricetta.titolo }}</h1>
+
+                @if (isFavorite) {
+                  <span class="det-fav-msg gold">
+                    <span class="icon">❤️</span> Salvata nei preferiti
+                  </span>
+                }
+
+                @if (ratingMedio > 0) {
+                  <div class="det-rating-badge" [title]="'Valutazione media community'">
+                    <span class="star">★</span>
+                    <span class="val">{{ ratingMedio | number:'1.1-1' }}</span>
+                  </div>
+                }
+              </div>
+
+              <div class="det-meta">
+                <span class="det-meta-item">👨‍🍳 <strong>{{ ricetta.autore }}</strong></span>
+                <span class="det-meta-item">⏱️ <strong>{{ ricetta.tempoCottura }} min</strong></span>
+              </div>
+              <p class="det-description">{{ ricetta.descrizione }}</p>
+            </header>
+
+            <hr class="det-divider">
+
+            <div class="det-grid-info">
+              <section class="det-ingredients">
+                <h2><span class="icon">🛒</span> Ingredienti</h2>
+                <ul>
+                  @for (ing of ricetta.ingredienti; track ing.name) {
+                    <li>
+                      <span class="ing-qta">{{ ing.quantita }} {{ ing.unitaMis }}</span>
+                      <span class="ing-name">{{ ing.name }}</span>
+                    </li>
+                  }
+                </ul>
+              </section>
+
+              <section class="det-instructions">
+                <h2><span class="icon">📝</span> Preparazione</h2>
+                <p style="white-space: pre-line;">{{ ricetta.istruzioni }}</p>
+              </section>
+            </div>
+
+            <section class="det-rating-section">
+              <h2><span class="icon">⭐</span> Valuta questa ricetta</h2>
+
+              <div class="rating-stars" [class.disabled]="alrVoted">
+                @for (stella of [1, 2, 3, 4, 5]; track stella) {
+                  <span
+                    class="star-icon"
+                    [class.filled]="stella <= (hoverRating || votoUtente)"
+                    (mouseenter)="!alrVoted && setHover(stella)"
+                    (mouseleave)="!alrVoted && setHover(0)"
+                    (click)="!alrVoted && vota(stella)">★
+                  </span>
+                }
+              </div>
+
+              <p class="rating-text">
+                @if (alrVoted) {
+                  <strong>✅ Hai già valutato questa ricetta. Grazie!</strong>
+                } @else if (votoUtente > 0) {
+                  Hai valutato questa ricetta con <strong>{{ votoUtente }} stelle</strong>. Grazie!
+                } @else {
+                  Dai il tuo tocco di classe: seleziona da 1 a 5 stelle.
+                }
+              </p>
+            </section>
+
+            @if (videoSafeUrl) {
+              <section class="det-video">
+                <h2><span class="icon">📺</span> Video Tutorial</h2>
+                <div class="video-container">
+                  <iframe
+                    [src]="videoSafeUrl"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                  </iframe>
+                </div>
+              </section>
+            }
+
+            <hr class="det-divider">
+
+            <section class="det-comments">
+              <h2><span class="icon">💬</span> Commenti ({{ commenti.length }})</h2>
+
+              <div class="comment-form">
+                <textarea
+                  [(ngModel)]="nuovoCommento"
+                  placeholder="Cosa ne pensi di questa ricetta? Scrivi qui..."
+                  rows="3">
+                </textarea>
+                <button (click)="inviaCommento()" [disabled]="!nuovoCommento.trim()">
+                  Invia Commento 🚀
+                </button>
+              </div>
+
+              <div class="comments-list">
+                @for (c of commenti; track c.id) {
+                  <div class="comment-item">
+                    <div class="comment-header">
+                      <div class="comment-user-info">
+                        <span class="comment-author">{{ c.authUsername }}</span>
+                        <span class="comment-date">{{ c.createDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                      </div>
+
+                      @if (authService.isAdmin() || (authService.getCurrentUser()?.username === c.authUsername)) {
+                        <button class="btn-delete-comment" (click)="eliminaCommento(c)" title="Elimina il tuo commento">
+                          🗑️
+                        </button>
+                      }
+                    </div>
+                    <p class="comment-content">{{ c.content }}</p>
+                  </div>
+                } @empty {
+                  <div class="no-comments">
+                    <span style="font-size: 2rem">✨</span>
+                    <p>Ancora nessun commento. Sii il primo!</p>
+                  </div>
+                }
+              </div>
+            </section>
+
+            <footer class="det-actions">
+              <button class="btn-back" routerLink="/recipe-list">⬅️ Torna alla lista</button>
+              @if(!isFavorite){
+                <button class="btn-fav" (click)="aggiungiAiPreferiti()">
+                  🤍 Salva nei Preferiti
+                </button>
+              }@else{
+                <button class="btn-fav" (click)="rimuoviDaiPreferiti()">
+                  ❤️ Rimuovi dai Preferiti
+                </button>
+              }
+            </footer>
+          </div>
+        </article>
+      }
+    </div>
+  </main>
+  <app-footer></app-footer>
+</div>
+</html>

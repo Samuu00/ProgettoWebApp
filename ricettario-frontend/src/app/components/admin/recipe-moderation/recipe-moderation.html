@@ -1,0 +1,157 @@
+<html lang="it">
+<head>
+  <title>Recipe Moderation</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+
+  <main class="mod-page-container">
+    <div class="mod-blob mod-b1" aria-hidden="true"></div>
+    <div class="mod-blob mod-b2" aria-hidden="true"></div>
+
+    <span class="mod-sketch mod-icon-1" aria-hidden="true">📋</span>
+    <span class="mod-sketch mod-icon-2" aria-hidden="true">👨‍⚖️</span>
+
+    <div class="mod-content-wrapper">
+      <header class="mod-header">
+        <div class="header-title-box">
+          <span class="title-decorator"></span>
+          <h1>Moderazione Ricette</h1>
+          <span class="title-decorator"></span>
+        </div>
+
+        <nav class="tab-container" aria-label="Filtro stato ricette">
+          <button [class.active]="mostraSoloPendenti" (click)="toggleVisualizzazione(true)">
+            In Revisione
+          </button>
+          <button [class.active]="!mostraSoloPendenti" (click)="toggleVisualizzazione(false)">
+            Archivio Totale
+          </button>
+        </nav>
+      </header>
+
+      <section class="adm-nav-section">
+        <div class="custom-dropdown">
+          <button class="dropdown-trigger">
+            <span>🛡️ Moderazione Ricette</span>
+            <span class="arrow">▼</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a routerLink="/admin/dashboard"><span class="icon">📊</span> Dashboard Main</a></li>
+            <li><a routerLink="/admin/users"><span class="icon">👥</span> Gestione Community</a></li>
+            <li><a routerLink="/admin/comment-moderation"><span class="icon">💬</span> Moderazione Commenti</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="table-card">
+        @if (loading) {
+          <div class="det-status-card">
+            <div class="det-loader">🍳</div>
+            <p>Lo Chef sta preparando i dati...</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="mod-table">
+              <thead>
+              <tr>
+                <th>Piatto</th>
+                <th>Dettagli Ricetta</th>
+                <th>Stato attuale</th>
+                <th class="text-right">Azioni</th>
+              </tr>
+              </thead>
+              <tbody>
+                @for (ricetta of ricetteVisualizzate; track ricetta.id) {
+                  <tr>
+                    <td class="img-col">
+                      <div class="img-frame">
+                        <img [src]="ricetta.immagineURL || 'assets/placeholder-food.jpg'" alt="Anteprima">
+                      </div>
+                    </td>
+                    <td class="info-col">
+                      <span class="recipe-title">{{ ricetta.titolo }}</span>
+                      <span class="recipe-author">Chef: {{ ricetta.autore || 'Anonimo' }}</span>
+                      <div class="recipe-tags">
+                        <span class="tag">{{ ricetta.categoria || 'Gourmet' }}</span>
+                        <span class="tag diff">{{ ricetta.difficolta }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge" [class.badge-pending]="ricetta.status === 'BOZZA'" [class.badge-approved]="ricetta.status === 'APPROVATA'">
+                        {{ ricetta.status }}
+                      </span>
+                    </td>
+                    <td class="actions-col">
+                      @if (ricetta.status === 'BOZZA') {
+                        <button routerLink="/admin/pending-recipe/{{ ricetta.id }}" class="btn-mod-view" title="Vedi Dettaglio Bozza">
+                          👁️
+                        </button>
+
+                        <button (click)="azioneApprova(ricetta.id!)" class="btn-mod-approve" title="Approva Istantaneamente">
+                          ✔️
+                        </button>
+                      }
+
+                      @if (ricetta.status === 'APPROVATA') {
+                        <button routerLink="/recipe/{{ ricetta.id }}" class="btn-mod-view" title="Vedi Dettaglio Bozza">
+                          👁️
+                        </button>
+                      }
+
+                      <button (click)="ricetta.status === 'BOZZA' ? azioneEliminaBozza(ricetta.id!) : azioneElimina(ricetta.id!)" class="btn-mod-delete" title="Elimina">
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (ricetteVisualizzate.length === 0) {
+            <div class="empty-state">
+              <span class="empty-emoji">✨</span>
+              <p>Tutto in ordine! Nessuna ricetta da revisionare.</p>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </main>
+
+  @if(mostraConfermaEliminazioneBozza){
+    <div class="mod-overlay">
+      <div class="mod-modal-card">
+        <div class="mod-modal-icon">⚠️</div>
+        <h2>Eliminare Bozza?</h2>
+        <p>Stai scartando questa richiesta. Verrà rimossa definitivamente dalla coda di moderazione.</p>
+        <div class="mod-modal-actions">
+          <button class="btn-modal-cancel" (click)="annullaEliminazioneBozza()">Ripensaci</button>
+          <button class="btn-modal-confirm" (click)="confermaEliminazioneBozza()">Sì, scarta bozza</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (mostraConfermaEliminazione) {
+    <div class="mod-overlay">
+      <div class="mod-modal-card">
+        <div class="mod-modal-icon">⚠️</div>
+        <h2>Sei sicuro, Chef?</h2>
+        <p>Questa ricetta è già pubblica. Verrà rimossa definitivamente dal ricettario!</p>
+        <div class="mod-modal-actions">
+          <button class="btn-modal-cancel" (click)="annullaEliminazione()">Ripensaci</button>
+          <button class="btn-modal-confirm" (click)="confermaEliminazioneEffettiva()">Sì, elimina ricetta</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <app-footer></app-footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 80px;
+  padding: 0 3rem;
+  background: transparent !important;
+  position: relative;
+  z-index: 1000;
+}
+
+.navbar-left, .navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem 1.4rem;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  white-space: nowrap;
+}
+
+.home-btn, .dash-btn, .admin-btn {
+  background: white;
+  color: #1a202c;
+  border: 2px solid #1a202c;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+}
+
+.active-link {
+  background: #1a202c !important; /* Forza il nero */
+  color: white !important;
+  border-color: #1a202c !important;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.nav-btn:hover:not(.active-link):not(.logout-btn) {
+  background: #f7fafc;
+  transform: translateY(-4px) scale(1.02);
+}
+
+.logout-btn {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 8px 15px rgba(220, 38, 38, 0.2);
+}
+
+.nav-btn:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.home-btn:hover {
+  background: #ed8936;
+  box-shadow: 0 12px 20px rgba(237, 137, 54, 0.3);
+}
+
+.dash-btn:hover, .admin-btn:hover {
+  background: #1a202c;
+  color: white;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.logout-btn:hover {
+  background: #b91c1c;
+  box-shadow: 0 12px 20px rgba(220, 38, 38, 0.4);
+}
+
+.btn-icon {
+  font-size: 1.1rem;
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    padding: 0 1rem;
+    height: 70px;
+  }
+  .nav-btn {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.7rem;
+    gap: 6px;
+  }
+}

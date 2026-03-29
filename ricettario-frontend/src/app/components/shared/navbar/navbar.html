@@ -1,0 +1,35 @@
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="nav-btn"
+            routerLink="/recipe-list"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{exact: true}">
+      <span class="btn-icon">🏠</span> Home
+    </button>
+  </div>
+
+  <div class="navbar-right">
+    @if (userRole === 'ADMIN') {
+      <button class="nav-btn"
+              routerLink="/admin"
+              routerLinkActive="active-link">
+        <span class="btn-icon">🛡️</span> Admin
+      </button>
+      <button class="nav-btn"
+              routerLink="/dashboard"
+              routerLinkActive="active-link">
+        <span class="btn-icon">👨‍🍳</span> Dashboard
+      </button>
+    } @else if (userRole === 'STANDARD') {
+      <button class="nav-btn"
+              routerLink="/dashboard"
+              routerLinkActive="active-link">
+        <span class="btn-icon">👨‍🍳</span> Dashboard
+      </button>
+    }
+
+    <button class="nav-btn logout-btn" (click)="onLogOut()">
+      <span class="btn-icon">🚪</span> Logout
+    </button>
+  </div>
+</nav>

@@ -1,0 +1,94 @@
+<html lang="it">
+<head>
+  <title>Admin Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="admin-dashboard.css">
+</head>
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+
+  <main class="adm-page-container">
+    <div class="adm-blob adm-b1" aria-hidden="true"></div>
+    <div class="adm-blob adm-b2" aria-hidden="true"></div>
+    <span class="adm-sketch adm-icon-1" aria-hidden="true">📊</span>
+    <span class="adm-sketch adm-icon-2" aria-hidden="true">📈</span>
+
+    <div class="adm-content-wrapper">
+
+      <header class="adm-header">
+        <div class="header-title-box">
+          <span class="title-decorator"></span>
+          <h1>Dashboard</h1>
+          <span class="title-decorator"></span>
+        </div>
+        <p>Panoramica completa del tuo ricettario digitale.</p>
+      </header>
+
+      <section class="adm-nav-section">
+        <div class="custom-dropdown">
+          <button class="dropdown-trigger">
+            <span>📊 Dashboard Admin</span>
+            <span class="arrow">▼</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li>
+              <a routerLink="/admin/moderation">
+                <span class="icon">🛡️</span> Moderazione Ricette
+              </a>
+            </li>
+            <li>
+              <a routerLink="/admin/users">
+                <span class="icon">👥</span> Gestione Community
+              </a>
+            </li>
+            <li>
+              <a routerLink="/admin/comment-moderation">
+                <span class="icon">💬</span> Moderazione Commenti
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="adm-stats-section">
+        <div class="adm-stats-grid">
+
+          <article class="adm-stat-card">
+            <figure class="adm-stat-icon-wrapper">👥</figure>
+            <div class="adm-stat-details">
+              <h3>Utenti Totali</h3>
+              <data class="adm-stat-value">{{ stats.users }}</data>
+            </div>
+          </article>
+
+          <article class="adm-stat-card">
+            <figure class="adm-stat-icon-wrapper">🥗</figure>
+            <div class="adm-stat-details">
+              <h3>Ricette</h3>
+              <data class="adm-stat-value">{{ stats.recipes }}</data>
+            </div>
+          </article>
+
+          <article class="adm-stat-card adm-chart-card">
+            <div class="adm-chart-header">
+              <div class="adm-stat-details">
+                <h3>DIFFICOLTA' RICETTE</h3>
+              </div>
+            </div>
+
+            <div class="adm-chart-wrapper">
+              <canvas id="difficultyChart"></canvas>
+            </div>
+          </article>
+
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+</div>
+</html>

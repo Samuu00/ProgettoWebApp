@@ -1,0 +1,211 @@
+:host {
+  display: block;
+}
+
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #fff8e1 0%, #ffc107 100%);
+  position: relative;
+  font-family: 'Poppins', sans-serif;
+}
+
+.scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
+}
+
+.scrollable-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb {
+  background: rgba(180, 83, 9, 0.2);
+  border-radius: 10px;
+}
+
+.about-page {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  padding: 60px 20px;
+}
+
+.content-wrapper {
+  position: relative;
+  z-index: 10;
+  max-width: 1100px;
+  width: 100%;
+}
+
+.about-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.header-title-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.title-decorator {
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(to right, transparent, #b45309, transparent);
+  border-radius: 50px;
+}
+
+.about-header h1 {
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  font-weight: 900;
+  color: #1a202c;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.about-header p {
+  color: #5a3e1c;
+  font-weight: 700;
+  opacity: 0.8;
+  margin-top: 10px;
+}
+
+.team-section {
+  margin-bottom: 5rem;
+}
+
+.section-label {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #b45309;
+  letter-spacing: 4px;
+  margin-bottom: 2.5rem;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+}
+
+.center-single {
+  display: flex;
+  justify-content: center;
+}
+
+.chef-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid white;
+  border-radius: 40px;
+  padding: 2.5rem;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 15px 35px rgba(130, 50, 0, 0.08);
+}
+
+.chef-card:hover {
+  transform: translateY(-15px);
+  background: white;
+  box-shadow: 0 30px 60px rgba(130, 50, 0, 0.15);
+}
+
+.avatar-box {
+  width: 100px;
+  height: 100px;
+  background: #ed8936;
+  border-radius: 35px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  box-shadow: 0 10px 20px rgba(237, 137, 54, 0.3);
+}
+
+.avatar-box.secondary { background: #1a202c; }
+.avatar-box.dark { background: #5a3e1c; }
+
+.chef-details h3 {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #1a202c;
+  margin: 0;
+}
+
+.role {
+  display: block;
+  color: #ed8936;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  margin: 0.5rem 0 1.2rem;
+  letter-spacing: 1px;
+}
+
+.chef-details p {
+  color: #718096;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.chef-card.premium {
+  border: 3px solid #ed8936;
+  max-width: 450px;
+}
+
+.rl-sketch {
+  position: absolute;
+  font-size: 5rem;
+  z-index: 2;
+  animation: floatAnim 8s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.icon-1 { top: 10%; left: 5%; }
+.icon-2 { top: 40%; right: 5%; animation-delay: 2s; }
+.icon-3 { bottom: 20%; left: 8%; animation-delay: 4s; }
+.icon-4 { bottom: 10%; right: 10%; animation-delay: 1s; }
+
+.rl-blob {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 1;
+  filter: blur(120px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.rl-b1 { width: 500px; height: 500px; top: -10%; left: -5%; background: #fbbf24; }
+.rl-b2 { width: 500px; height: 500px; bottom: -10%; right: -5%; background: #f97316; }
+
+
+@keyframes floatAnim {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-30px) rotate(5deg); }
+}
+
+@media (max-width: 768px) {
+  .chef-card { padding: 1.5rem; }
+  .about-header h1 { font-size: 2.2rem; }
+  .team-grid { grid-template-columns: 1fr; }
+}

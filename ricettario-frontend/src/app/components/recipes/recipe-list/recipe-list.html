@@ -1,0 +1,124 @@
+<html lang="it">
+<head>
+  <title>Home | Scopri le nostre ricette</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+
+  <main class="recipe-list-page">
+    <div class="rl-blob rl-b1" aria-hidden="true"></div>
+    <div class="rl-blob rl-b2" aria-hidden="true"></div>
+
+    <span class="rl-sketch rl-icon-1">🍳</span>
+    <span class="rl-sketch rl-icon-2">🍝</span>
+    <span class="rl-sketch rl-icon-3">🍷</span>
+
+    <div class="rl-content-wrapper">
+      <header class="rl-header">
+        <div class="header-title-box">
+          <span class="title-decorator"></span>
+          <h1>Menù della Community</h1>
+          <span class="title-decorator"></span>
+        </div>
+        <p>L'eccellenza culinaria condivisa dai nostri Chef</p>
+      </header>
+
+      <section class="rl-filters-minimal">
+        <div class="rl-filters-grid">
+          <div class="rl-field">
+            <label class="gourmet-label">Piatto</label>
+            <input type="text" placeholder="Es. Carbonara..." [(ngModel)]="filtri.title" class="gourmet-input">
+          </div>
+          <div class="rl-field">
+            <label class="gourmet-label">Categoria</label>
+            <input type="text" placeholder="Es. Primo, Dolce..." [(ngModel)]="filtri.category" class="gourmet-input">
+          </div>
+          <div class="rl-field">
+            <label class="gourmet-label">Tempo cottura (min)</label>
+            <input type="number" placeholder="Es. 30" [(ngModel)]="filtri.maxTime" class="gourmet-input">
+          </div>
+          <div class="rl-field">
+            <label class="gourmet-label">Sfida</label>
+            <div class="gourmet-dropdown" (click)="toggleDropdown()" [class.active]="isDropdownOpen">
+              <div class="dropdown-selected">
+                {{ getSelectedLabel() }}
+                <span class="dropdown-arrow"></span>
+              </div>
+              <div class="dropdown-menu">
+                <div class="dropdown-item" (click)="selectDifficulty(''); $event.stopPropagation()">✨ Ogni Difficoltà</div>
+                <div class="dropdown-item" (click)="selectDifficulty('FACILE'); $event.stopPropagation()">🟢 Facile</div>
+                <div class="dropdown-item" (click)="selectDifficulty('MEDIO'); $event.stopPropagation()">🟡 Medio</div>
+                <div class="dropdown-item" (click)="selectDifficulty('DIFFICILE'); $event.stopPropagation()">🔴 Difficile</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rl-filters-actions">
+          <button class="rl-btn-reset" (click)="resetFiltri()">
+            <span class="icon">↺</span> Reset
+          </button>
+          <button class="rl-btn-search" (click)="applicaFiltri()">
+            Applica Filtri
+          </button>
+        </div>
+      </section>
+
+      @if (loading) {
+        <div class="gourmet-loader">
+          <div class="loader-chef">👨‍🍳</div>
+          <p>Preparazione della sala...</p>
+        </div>
+      } @else {
+        <div class="rl-recipes-grid">
+          @for (ricetta of ricette; track ricetta.id) {
+            <article class="rl-card-premium">
+              <div class="card-img-wrapper">
+                <img [src]="ricetta.immagineURL || 'assets/default.jpg'" [alt]="ricetta.titolo">
+
+                @if (ricetta.id !== undefined && ratingMedioMap[ricetta.id] > 0) {
+                  <div class="rating-overlay">
+                    <span class="star-icon">★</span>
+                    <span>{{ ratingMedioMap[ricetta.id] | number:'1.1-1' }}</span>
+                  </div>
+                }
+
+                <div class="difficulty-overlay">{{ ricetta.difficolta }}</div>
+              </div>
+
+              <div class="card-content">
+                <div class="card-top-flex">
+                  <span class="category-tag">{{ ricetta.categoria || 'Gourmet' }}</span>
+                </div>
+
+                <h3>{{ ricetta.titolo }}</h3>
+
+                <div class="card-meta">
+                  <span>👤 {{ ricetta.autore || 'Chef Anonimo' }}</span>
+                  <span class="dot">•</span>
+                  <span>⏱ {{ ricetta.tempoCottura }} min</span>
+                </div>
+
+                <button class="btn-explore" [routerLink]="['/recipe', ricetta.id]">
+                  Scopri Ricetta
+                </button>
+              </div>
+            </article>
+          } @empty {
+            <div class="rl-empty-state">
+              <div class="empty-icon">🍳</div>
+              <h3>Nessun piatto trovato, Chef!</h3>
+              <p>Non abbiamo trovato ricette che corrispondano ai tuoi filtri.</p>
+              <button class="btn-reset-light" (click)="resetFiltri()">Mostra tutte</button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+  <app-footer></app-footer>
+</div>
+</html>

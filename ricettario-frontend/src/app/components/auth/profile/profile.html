@@ -1,0 +1,98 @@
+<html lang="it">
+<head>
+  <title>Il tuo profilo</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+
+  <main class="prof-page-container">
+    <div class="prof-blob prof-b1"></div>
+    <div class="prof-blob prof-b2"></div>
+    <span class="prof-sketch prof-icon-1">👨‍🍳</span>
+    <span class="prof-sketch prof-icon-2">🔐</span>
+
+    <div class="prof-content-wrapper">
+
+      <nav class="adm-nav-section">
+        <div class="custom-dropdown">
+          <button type="button" class="dropdown-trigger" (click)="toggleDropdown($event)">
+      <span class="trigger-content">
+        <span class="icon-main">👤</span>
+        <span class="text">Gestisci Profilo</span>
+      </span>
+            <span class="arrow" [class.open]="isDropdownOpen">▼</span>
+          </button>
+
+          <ul class="dropdown-menu" [class.show]="isDropdownOpen">
+            <li><a routerLink="/dashboard">⚙️ Dashboard Chef</a></li>
+            <li><a routerLink="/favorites">❤️ I Miei Preferiti</a></li>
+            <li class="separator"></li>
+            <li><a routerLink="/recipe-create" class="special-link">✨ Crea Nuova Ricetta</a></li>
+          </ul>
+        </div>
+      </nav>
+
+      <header class="adm-header">
+        <div class="header-title-box">
+          <span class="line"></span>
+          <h1>PROFILO CHEF</h1>
+          <span class="line"></span>
+        </div>
+        <p class="subtitle">Gestisci la tua identità e le tue credenziali d'accesso.</p>
+      </header>
+
+      <section class="hero-card">
+        <div class="card-left">
+          <div class="avatar-box">
+            <div class="avatar">{{ utente?.username?.charAt(0)?.toUpperCase() }}</div>
+          </div>
+          <div class="chef-details">
+            <h2 class="username">{{ utente?.username }}</h2>
+            <p class="email">{{ utente?.email }}</p>
+            @if(utente?.ruolo == 'ADMIN'){
+              <span class="badge">ADMIN</span>
+            }@else{
+            <span class="badge">USER</span>
+            }
+
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="card-right">
+          <form #profiloForm="ngForm" (ngSubmit)="salvaNuovoNome()">
+            <h3>SICUREZZA ACCOUNT</h3>
+            <div class="input-group">
+              <label>NUOVO USERNAME</label>
+              <div class="input-wrapper">
+                <span class="user-icon">👤</span>
+                <input type="text" name="username" [(ngModel)]="nuovoUsername" [placeholder]="utente?.username">
+              </div>
+            </div>
+            <button type="submit" class="save-btn">SALVA MODIFICHE</button>
+          </form>
+          @if (errorMess) {
+            <div class="message-box message-error">
+              <span>⚠️</span> {{ errorMess }}
+            </div>
+          }
+          @if (completeMess) {
+            <div class="message-box message-success">
+              <span>✅</span> {{ completeMess }}
+            </div>
+          }
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+</div>
+</body>
+</html>

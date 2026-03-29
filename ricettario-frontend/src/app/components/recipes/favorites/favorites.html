@@ -1,0 +1,97 @@
+<html lang="it">
+<head>
+  <title>I Miei Preferiti | Gourmet Collection</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+
+  <main class="fav-page-container">
+    <div class="fav-blob fav-b1"></div>
+    <div class="fav-blob fav-b2"></div>
+    <span class="fav-sketch fav-icon-1">🌟</span>
+    <span class="fav-sketch fav-icon-2">🍷</span>
+
+    <div class="fav-content-wrapper">
+      <nav class="adm-nav-section">
+        <div class="custom-dropdown">
+          <button type="button" class="dropdown-trigger">
+            <span class="trigger-content">
+              <span class="icon-main">❤️</span>
+              <span class="text">Preferiti</span>
+            </span>
+            <span class="arrow">▼</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a routerLink="/dashboard"><span>⚙️</span> Dashboard Chef</a></li>
+            <li><a routerLink="/profile"><span>👤</span> Gestisci Profilo</a></li>
+            <li class="separator"></li>
+            <li><a routerLink="/recipe-create" class="special-link"><span>✨</span> Nuova Creazione</a></li>
+          </ul>
+        </div>
+      </nav>
+
+      <header class="fav-header">
+        <div class="header-title-box">
+          <span class="title-ornament"></span>
+          <h1>I Tuoi Tesori</h1>
+          <span class="title-ornament"></span>
+        </div>
+        <p class="header-subtitle">La selezione d'eccellenza salvata nel tuo ricettario personale.</p>
+      </header>
+
+      <div class="fav-main-content">
+        @if (loading) {
+          <div class="gourmet-status-card">
+            <div class="loader-chef">👨‍🍳</div>
+            <p>Sincronizzando i tuoi sapori d'autore...</p>
+          </div>
+        } @else if (listaPreferiti.length === 0) {
+          <div class="gourmet-status-card empty-state">
+            <div class="empty-emoji">🍽️</div>
+            <h3>Il tuo tavolo è vuoto</h3>
+            <p>Esplora l'alta cucina e aggiungi i piatti che ti hanno ispirato.</p>
+            <button routerLink="/recipe-list" class="btn-discover-gourmet">Esplora il Menù</button>
+          </div>
+        } @else {
+          <div class="fav-grid">
+            @for (ricetta of listaPreferiti; track ricetta.id) {
+              <article class="gourmet-fav-card">
+                <div class="card-image-section">
+                  <div class="plate-frame">
+                    <div class="plate-inner-glow"></div>
+                    <img [src]="ricetta.immagineURL || 'assets/placeholder-food.jpg'" alt="Piatto">
+                  </div>
+                  <button class="btn-remove-gourmet" (click)="rimuoviDaiPreferiti(ricetta.id!)" title="Rimuovi">
+                    <span class="icon">✕</span>
+                  </button>
+                </div>
+
+                <div class="card-info-section">
+                  <span class="recipe-category">{{ ricetta.categoria || 'Gourmet' }}</span>
+                  <h3>{{ ricetta.titolo }}</h3>
+
+                  <div class="recipe-details">
+                    <span class="detail-item"><i class="icon">⏱</i> {{ ricetta.tempoCottura }} min</span>
+                    <span class="detail-divider"></span>
+                    <span class="detail-item"><i class="icon">⭐</i> {{ ratingMedioMap[ricetta.id!] || '0.0' }}</span>
+                  </div>
+
+                  <button class="btn-view-details-gourmet" [routerLink]="['/recipe', ricetta.id]">
+                    Dettagli Piatto
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+</div>
+</body>
+</html>

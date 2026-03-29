@@ -1,0 +1,109 @@
+<html lang="it">
+<head>
+  <title>Login | Ben tornato!</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="login.css">
+</head>
+<div class="page-wrapper">
+  <main class="login-container">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+
+    <div class="particle p1"></div>
+    <div class="particle p2"></div>
+    <div class="particle p3"></div>
+    <div class="particle p4"></div>
+    <div class="particle p5"></div>
+
+    <span class="sketch icon-1">🍳</span>
+    <span class="sketch icon-2">🍅</span>
+    <span class="sketch icon-3">🌿</span>
+    <span class="sketch icon-4">🥖</span>
+    <span class="sketch icon-5">🧀</span>
+    <span class="sketch icon-6">☕</span>
+
+    <section class="login-card">
+      <header>
+        <h2 id="login-title">Bentornato, Chef</h2>
+        <p>Accedi per gestire le tue ricette gourmet</p>
+      </header>
+
+      <form (ngSubmit)="onLogin()" aria-labelledby="login-title" #loginForm="ngForm">
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            id="username"
+            type="text"
+            [(ngModel)]="credential.username"
+            name="username"
+            required
+            autocomplete="username"
+            placeholder="Il tuo nome utente"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input
+              type="password"
+              (focus)="setStealingRecipe(true)"
+              (blur)="setStealingRecipe(false)"
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="credential.password"
+              name="password"
+              required
+              placeholder="La tua password"
+            />
+            <button type="button" class="toggle-btn" (click)="togglePassword()">
+              <span *ngIf="!showPassword">👁️</span>
+              <span *ngIf="showPassword">🙈️</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="forgot-pwd-container">
+          <a routerLink="/forgot-password" class="forgot-link">
+            Password dimenticata?
+          </a>
+        </div>
+
+        <button type="submit" [disabled]="!loginForm.valid">
+          Accedi al Ricettario
+        </button>
+
+        @if (errorMess) {
+          <footer class="error-container">
+            <p class="error" role="alert">
+              <span class="error-icon">⚠️</span> {{ errorMess }}
+            </p>
+          </footer>
+        }
+
+      </form>
+
+      <footer class="login-footer">
+        <p>
+          Nuovo chef in cucina?
+          <a routerLink="/register">Inizia ora gratis</a>
+        </p>
+      </footer>
+
+    </section>
+
+    <div class="chef-side-container" [class.hiding]="isStealingRecipe">
+      <div class="chef-animator" [style.transform]="'rotateY(' + lookRotation + 'deg) rotateZ(' + (lookRotation/2) + 'deg)'">
+        <img src="images/chef.svg" alt="Chef Gourmet" class="chef-img-external">
+
+      </div>
+    </div>
+
+  </main>
+  <app-footer></app-footer>
+</div>
+</html>

@@ -1,0 +1,128 @@
+<html lang="it">
+<head>
+  <title>Recipe Form | Crea e carica la tua ricetta</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+  <main class="rf-page-container">
+    <div class="rf-blob rf-b1"></div>
+    <div class="rf-blob rf-b2"></div>
+    <div class="rf-blob rf-b3"></div>
+
+    <span class="rf-sketch rf-icon-1">✍️</span>
+    <span class="rf-sketch rf-icon-2">🥣</span>
+    <span class="rf-sketch rf-icon-3">🔥</span>
+
+    <div class="rf-content-wrapper">
+      <section class="rf-card">
+        <header class="rf-header">
+          <div class="header-title-box">
+            <span class="title-decorator"></span>
+            <h1>{{ isEditMode ? 'Affina la Ricetta' : 'Nuova Creazione' }}</h1>
+            <span class="title-decorator"></span>
+          </div>
+          <p>{{ isEditMode ? 'Modifica gli ingredienti del tuo capolavoro' : 'Condividi il tuo talento culinario con il mondo' }}</p>
+        </header>
+
+        <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()" class="rf-form">
+          <div class="rf-grid-layout">
+
+            <div class="rf-column">
+              <div class="rf-group">
+                <label for="title">Titolo del Piatto</label>
+                <input id="title" type="text" formControlName="title" placeholder="Es. Risotto allo Zafferano" class="rf-input">
+              </div>
+
+              <div class="rf-group">
+                <label class="gourmet-label">Copertina del Piatto</label>
+                <div class="upload-container" [class.has-image]="imagePreview">
+                  <input type="file" id="fileInput" (change)="onFileSelected($event)" accept="image/*" hidden>
+                  <label for="fileInput" class="upload-trigger">
+                    @if (!imagePreview) {
+                      <div class="upload-content centered-bottom-content">
+                        <span class="upload-icon">📸</span>
+                        <p>Carica la foto della ricetta</p>
+                      </div>
+                    } @else {
+                      <div class="preview-wrapper">
+                        <img [src]="imagePreview" alt="Preview" class="gourmet-preview-img">
+                        <div class="change-overlay">
+                          <span>Cambia Foto</span>
+                        </div>
+                      </div>
+                    }
+                  </label>
+                </div>
+              </div>
+
+              <div class="rf-group">
+                <label for="description">Descrizione Breve</label>
+                <textarea id="description" rows="3" formControlName="description" placeholder="Un'introduzione invitante..." class="rf-input"></textarea>
+              </div>
+            </div>
+
+            <div class="rf-column">
+              <div class="rf-group">
+                <label for="ingredients">Ingredienti (uno per riga)</label>
+                <textarea id="ingredients" rows="5" formControlName="ingredients" placeholder="Es. 320g Riso, 1 bustina Zafferano..." class="rf-input"></textarea>
+              </div>
+
+              <div class="rf-group">
+                <label for="instructions">Passaggi della Preparazione</label>
+                <textarea id="instructions" rows="6" formControlName="instructions" placeholder="Descrivi i passaggi con cura..." class="rf-input"></textarea>
+              </div>
+
+              <div class="rf-row">
+                <div class="rf-group">
+                  <label class="gourmet-label">Difficoltà</label>
+                  <div class="gourmet-dropdown" (click)="toggleDifficulty()" [class.active]="isDiffOpen">
+                    <div class="dropdown-selected">
+                      {{ getDiffLabel() }}
+                      <span class="dropdown-arrow"></span>
+                    </div>
+                    <div class="dropdown-menu">
+                      <div class="dropdown-item" (click)="selectDifficulty('EASY')">🟢 Facile</div>
+                      <div class="dropdown-item" (click)="selectDifficulty('MEDIUM')">🟡 Media</div>
+                      <div class="dropdown-item" (click)="selectDifficulty('HARD')">🔴 Difficile</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rf-group">
+                  <label for="prepTime">Tempo (min)</label>
+                  <input id="prepTime" type="number" formControlName="prepTime" min="1" class="rf-input">
+                </div>
+              </div>
+
+              <div class="rf-group">
+                <label for="category">Categoria</label>
+                <input id="category" type="text" formControlName="category" placeholder="Es. Primi Piatti" class="rf-input">
+              </div>
+            </div>
+          </div>
+
+          @if (errorMessaggio) {
+            <footer class="error-container">
+              <p class="error" role="alert">
+                <span class="error-icon">⚠️</span> {{ errorMessaggio }}
+              </p>
+            </footer>
+          }
+
+          <footer class="rf-actions">
+            <button type="button" class="rf-btn-secondary" routerLink="/recipe-list">Annulla</button>
+            <button type="submit" class="rf-btn-primary" [disabled]="recipeForm.invalid">
+              {{ isEditMode ? 'Aggiorna Ricetta' : 'Pubblica Ricetta' }}
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  </main>
+  <app-footer></app-footer>
+</div>
+</body>
+</html>

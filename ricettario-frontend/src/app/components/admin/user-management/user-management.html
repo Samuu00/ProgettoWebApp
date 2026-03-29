@@ -1,0 +1,151 @@
+<html lang="it">
+<head>
+  <title>User Management</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="user-management.css">
+</head>
+
+<body>
+<div class="page-wrapper">
+
+  <app-navbar></app-navbar>
+
+  <main class="adm-page-container">
+
+    <div class="adm-blob adm-b1" aria-hidden="true"></div>
+    <div class="adm-blob adm-b2" aria-hidden="true"></div>
+    <span class="adm-sketch adm-icon-1" aria-hidden="true">👥</span>
+    <span class="adm-sketch adm-icon-2" aria-hidden="true">🛡️</span>
+
+    <div class="adm-content-wrapper">
+
+      <header class="adm-header">
+        <div class="header-title-box">
+          <span class="title-decorator"></span>
+          <h1>Community</h1>
+          <span class="title-decorator"></span>
+        </div>
+        <p>Gestione degli chef e dei permessi d'accesso al ricettario.</p>
+      </header>
+
+      <section class="adm-nav-section">
+        <div class="custom-dropdown nav-dropdown-right">
+          <button class="dropdown-trigger" type="button">
+            <span>👥 Gestione Community</span>
+            <span class="arrow">▲</span>
+          </button>
+
+          <ul class="dropdown-menu">
+            <li>
+              <a routerLink="/admin/dashboard">
+                <span class="icon">📊</span> Dashboard Admin
+              </a>
+            </li>
+            <li>
+              <a routerLink="/admin/moderation">
+                <span class="icon">🛡️</span> Moderazione Ricette
+              </a>
+            </li>
+            <li>
+              <a routerLink="/admin/comment-moderation">
+                <span class="icon">💬</span> Moderazione Commenti
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="table-card">
+        @if (loading) {
+          <div class="det-status-card">
+            <div class="det-loader">👨‍🍳</div>
+            <p>Consultazione registri della Community...</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="adm-table">
+              <thead>
+              <tr>
+                <th>Chef</th>
+                <th>Contatti</th>
+                <th>Ruolo</th>
+                <th>Stato</th>
+                <th class="actions-col">Azioni</th>
+              </tr>
+              </thead>
+
+              <tbody>
+                @for (user of utenti; track user.id) {
+                  <tr [class.user-blocked]="user.stato">
+                    <td class="user-info-col">
+                      <div class="avatar-mini">
+                        {{ user.username.charAt(0).toUpperCase() }}
+                      </div>
+                      <span class="username-text">{{ user.username }}</span>
+                    </td>
+
+                    <td class="email-text">{{ user.email }}</td>
+
+                    <td>
+                      <div class="role-dropdown-container">
+                        <button
+                          class="role-trigger"
+                          (click)="toggleDropdown(user.id!, $event)"
+                          type="button"
+                        >
+                          <span>{{ user.ruolo === 'ADMIN' ? 'Admin' : 'User' }}</span>
+                          <span class="role-arrow" [class.open]="activeDropdownId === user.id">▼</span>
+                        </button>
+
+                        <ul class="role-menu" [class.show]="activeDropdownId === user.id">
+                          <li class="role-item" (click)="selezionaRuolo(user, 'STANDARD')">
+                            <span class="role-icon">👤</span>
+                            <span>User</span>
+                          </li>
+                          <li class="role-item" (click)="selezionaRuolo(user, 'ADMIN')">
+                            <span class="role-icon">🛡️</span>
+                            <span>Admin</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span class="status-pill" [class.active]="!user.stato">
+                        {{ !user.stato ? 'Attivo' : 'Bannato' }}
+                      </span>
+                    </td>
+
+                    <td class="actions-col">
+                      <button
+                        (click)="gesticiStatoUtente(user.id!)"
+                        [class.btn-ban]="!user.stato"
+                        [class.btn-unban]="user.stato">
+                        {{ !user.stato ? '🚫 Banna' : '✅ Sblocca' }}
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 50px;">
+                      <div class="empty-emoji">🤷‍♂️</div>
+                      <p style="color: #718096; font-weight: 700;">Nessuno chef trovato.</p>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+
+</div>
+</body>
+</html>
+

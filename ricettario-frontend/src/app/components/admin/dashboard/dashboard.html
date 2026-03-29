@@ -1,0 +1,158 @@
+<html lang="it">
+<head>
+  <title>Dashboard | Chef Area</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+
+  <main class="prof-page-container">
+    <div class="prof-blob prof-b1" aria-hidden="true"></div>
+    <div class="prof-blob prof-b2" aria-hidden="true"></div>
+    <span class="prof-sketch prof-icon-1" aria-hidden="true">👨‍🍳</span>
+    <span class="prof-sketch prof-icon-2" aria-hidden="true">🥘</span>
+
+    <div class="prof-content-wrapper">
+
+      <nav class="adm-nav-section">
+        <div class="custom-dropdown">
+          <button class="dropdown-trigger">
+            <span class="trigger-content">
+              <span class="icon-main">⚙️</span>
+              <span class="text">Menu Chef</span>
+            </span>
+            <span class="arrow">▼</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a routerLink="/profile"><span class="icon">👤</span> Gestisci Profilo</a></li>
+            <li><a routerLink="/favorites"><span class="icon">❤️</span> I Miei Preferiti</a></li>
+            <li class="separator"></li>
+            <li>
+              <a routerLink="/recipe-create" class="special-link">
+                <span class="icon">✨</span> Crea Nuova Ricetta
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="dashboard-container">
+
+        <header class="user-profile-hero">
+          <div class="hero-content">
+            <div class="avatar-section">
+              <div class="avatar-wrapper">
+                <div class="avatar">
+                  {{ utenteLocale?.username?.charAt(0)?.toUpperCase() || 'C' }}
+                </div>
+                <div class="avatar-ring"></div>
+              </div>
+            </div>
+
+            <div class="details-section">
+              <div class="header-title-box">
+                <span class="title-decorator"></span>
+                <h1><strong>Dashboard Chef</strong></h1>
+                <span class="title-decorator"></span>
+              </div>
+              <h2>Bentornato, {{ utenteLocale?.username || 'Chef' }}! 👋</h2>
+              <p>La tua cucina digitale è pronta per nuove creazioni d'autore.</p>
+            </div>
+          </div>
+
+          <div class="user-stats-summary">
+            <article class="mini-stat">
+              <span class="count">{{ mieRicette.length }}</span>
+              <span class="label">Le mie Ricette</span>
+            </article>
+            <article class="mini-stat">
+              <span class="count">{{ preferiti || 0 }}</span>
+              <span class="label">Salvati</span>
+            </article>
+          </div>
+        </header>
+
+        <section class="my-recipes">
+          <div class="recipe-grid-premium">
+            @for (ricetta of mieRicette; track ricetta.id) {
+              <article class="recipe-card-premium">
+                <div class="card-image-wrapper">
+                  <img [src]="ricetta.immagineURL || 'assets/default-recipe.jpg'" [alt]="ricetta.titolo">
+
+                  @if (ricetta.id !== undefined && ratingMedioMap[ricetta.id] > 0) {
+                    <div class="dash-rating-overlay">
+                      <span class="star">★</span>
+                      <span>{{ ratingMedioMap[ricetta.id] | number:'1.1-1' }}</span>
+                    </div>
+                  }
+
+                  <span class="difficulty-chip" [attr.data-diff]="ricetta.difficolta">
+                    {{ ricetta.difficolta }}
+                  </span>
+                </div>
+
+                <div class="card-info">
+                  <div class="card-header-flex">
+                    <h3>{{ ricetta.titolo }}</h3>
+                  </div>
+
+                  <div class="card-meta">
+                    <span class="meta-item">⏱ {{ ricetta.tempoCottura }} min</span>
+                    <span class="meta-item-cat">{{ ricetta.categoria || 'Gourmet' }}</span>
+                  </div>
+
+                  <div class="card-footer-actions">
+                    <button [routerLink]="['/recipe', ricetta.id]"
+                            class="btn-mod-view"
+                            title="Visualizza Dettaglio">
+                      👁️
+                    </button>
+
+                    <button class="action-btn edit-btn"
+                            title="Modifica"
+                            (click)="azioneEdit(ricetta.id!)">
+                      ✏️
+                    </button>
+
+                    <button class="action-btn delete-btn"
+                            title="Elimina"
+                            (click)="azioneElimina(ricetta.id!)">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </article>
+            } @empty {
+              <div class="empty-dashboard-state">
+                <div class="empty-icon">🍳</div>
+                <h3>Ancora nessuna ricetta?</h3>
+                <p>Il mondo aspetta i tuoi piatti speciali.</p>
+                <button routerLink="/recipe-create" class="btn-create-now">Crea la tua prima ricetta</button>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  @if (mostraConfermaEliminazione) {
+    <div class="mod-overlay">
+      <div class="mod-modal-card">
+        <div class="mod-modal-icon">⚠️</div>
+        <h2>Sei sicuro, Chef?</h2>
+        <p>Questa ricetta verrà rimossa definitivamente dal ricettario. Non potrai tornare indietro!</p>
+
+        <div class="mod-modal-actions">
+          <button class="btn-modal-cancel" (click)="annullaEliminazione()">Ripensaci</button>
+          <button class="btn-modal-confirm" (click)="confermaEliminazioneEffettiva()">Sì, elimina</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <app-footer></app-footer>
+</div>
+</html>

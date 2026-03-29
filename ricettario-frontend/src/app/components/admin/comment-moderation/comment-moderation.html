@@ -1,0 +1,100 @@
+<html lang="it">
+<head>
+  <title>Comment Moderation</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="page-wrapper">
+  <app-navbar></app-navbar>
+
+  <main class="mod-page-container">
+    <div class="adm-blob adm-b1" aria-hidden="true"></div>
+    <div class="adm-blob adm-b2" aria-hidden="true"></div>
+
+    <span class="adm-sketch mod-icon-1" aria-hidden="true">💬</span>
+    <span class="adm-sketch mod-icon-2" aria-hidden="true">👨‍⚖️</span>
+
+    <div class="adm-content-wrapper">
+      <header class="adm-header">
+        <div class="header-title-box">
+          <span class="title-decorator"></span>
+          <h1>Moderazione Commenti</h1>
+          <span class="title-decorator"></span>
+        </div>
+        <p>Gestisci le interazioni della community e rimuovi i contenuti inappropriati.</p>
+      </header>
+
+      <section class="adm-nav-section">
+        <div class="custom-dropdown main-nav-dropdown">
+          <button class="dropdown-trigger">
+            <span>💬 Moderazione Commenti</span>
+            <span class="arrow">▼</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a routerLink="/admin/dashboard">📊 Dashboard Main</a></li>
+            <li><a routerLink="/admin/moderation">🛡️ Moderazione Ricette</a></li>
+            <li><a routerLink="/admin/users">👥 Gestione Community</a></li>
+          </ul>
+        </div>
+      </section>
+
+      @if (loading) {
+        <div class="det-status-card">
+          <div class="det-loader">💬</div>
+          <p>Lo Chef sta scansionando i commenti...</p>
+        </div>
+      } @else {
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="mod-table">
+              <thead>
+              <tr>
+                <th>Autore</th>
+                <th>Commento</th>
+                <th>Data e Ora</th>
+                <th class="text-right">Azioni</th>
+              </tr>
+              </thead>
+              <tbody>
+                @for (commento of commenti; track commento.id) {
+                  <tr>
+                    <td class="author-col">
+                      <span class="comment-author">{{ commento.authUsername }}</span>
+                    </td>
+                    <td class="info-col">
+                      <p class="comment-text-preview">{{ commento.content }}</p>
+                      <small class="recipe-ref">Rif. Ricetta ID: {{ commento.recipeID }}</small>
+                    </td>
+                    <td>
+                      <span class="comment-date">{{ commento.createDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                    </td>
+                    <td class="actions-col">
+                      <button
+                        (click)="azioneElimina(commento.id!)"
+                        class="btn-mod-delete"
+                        title="Elimina Commento">
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (commenti.length === 0) {
+            <div class="empty-state">
+              <span class="empty-emoji">✨</span>
+              <p>Nessun commento da moderare, Community pulita!</p>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+</div>
+</body>
+</html>
