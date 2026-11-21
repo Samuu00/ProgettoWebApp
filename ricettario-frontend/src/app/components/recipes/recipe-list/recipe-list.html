@@ -1,124 +1,100 @@
-<html lang="it">
-<head>
-  <title>Home | Scopri le nostre ricette</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
+<section class="band band--fade hero">
+  <div class="container hero__inner">
+    <h1>Cosa cuciniamo oggi?</h1>
+    <p>Le ricette della community, provate e votate da chi le ha cucinate.</p>
 
-<div class="page-wrapper">
-  <app-navbar></app-navbar>
+    <form class="search" role="search" (ngSubmit)="applicaFiltri()">
+      <label for="q" class="visually-hidden">Cerca una ricetta per nome</label>
+      <div class="input-wrap search__field">
+        <app-icon class="lead-icon" name="search" />
+        <input id="q" name="title" type="search" class="input input--lead" [(ngModel)]="filtri.title"
+               placeholder="Carbonara, tiramisù, parmigiana…" autocomplete="off" />
+      </div>
+      <button type="submit" class="btn btn--accent">Cerca</button>
+    </form>
+  </div>
+</section>
 
-  <main class="recipe-list-page">
-    <div class="rl-blob rl-b1" aria-hidden="true"></div>
-    <div class="rl-blob rl-b2" aria-hidden="true"></div>
+<div class="container page">
+  <form class="filters surface" (ngSubmit)="applicaFiltri()" aria-label="Filtri">
+    <div class="field">
+      <label for="f-cat">Categoria</label>
+      <input id="f-cat" name="category" class="input" [(ngModel)]="filtri.category" placeholder="Es. Primi, Dolci" (change)="applicaFiltri()" />
+    </div>
+    <div class="field">
+      <label for="f-time">Tempo massimo</label>
+      <select id="f-time" name="maxTime" class="select" [(ngModel)]="filtri.maxTime" (ngModelChange)="applicaFiltri()">
+        <option [ngValue]="undefined">Qualsiasi</option>
+        @for (t of times; track t) { <option [ngValue]="t">Fino a {{ t }} min</option> }
+      </select>
+    </div>
+    <fieldset class="field filters__diff">
+      <legend class="label">Difficoltà</legend>
+      <div class="segmented">
+        @for (d of difficulties; track d.value) {
+          <label>
+            <input type="radio" name="difficulty" [value]="d.value" [(ngModel)]="filtri.difficulty" (ngModelChange)="applicaFiltri()" />
+            {{ d.label }}
+          </label>
+        }
+      </div>
+    </fieldset>
+  </form>
 
-    <span class="rl-sketch rl-icon-1">🍳</span>
-    <span class="rl-sketch rl-icon-2">🍝</span>
-    <span class="rl-sketch rl-icon-3">🍷</span>
+  <div class="results-head" aria-live="polite">
+    @if (!loading && !error) {
+      <p><strong>{{ ricette.length }}</strong> {{ ricette.length === 1 ? 'ricetta' : 'ricette' }}</p>
+    }
+    @if (hasFilters) {
+      <button type="button" class="btn btn--ghost btn--sm" (click)="resetFiltri()">
+        <app-icon name="x" [size]="16" /> Azzera filtri
+      </button>
+    }
+  </div>
 
-    <div class="rl-content-wrapper">
-      <header class="rl-header">
-        <div class="header-title-box">
-          <span class="title-decorator"></span>
-          <h1>Menù della Community</h1>
-          <span class="title-decorator"></span>
-        </div>
-        <p>L'eccellenza culinaria condivisa dai nostri Chef</p>
-      </header>
-
-      <section class="rl-filters-minimal">
-        <div class="rl-filters-grid">
-          <div class="rl-field">
-            <label class="gourmet-label">Piatto</label>
-            <input type="text" placeholder="Es. Carbonara..." [(ngModel)]="filtri.title" class="gourmet-input">
+  @if (loading) {
+    <div class="recipe-grid" aria-busy="true" aria-label="Caricamento ricette">
+      @for (s of skeletons; track $index) {
+        <div class="sk-card surface">
+          <div class="skeleton sk-img"></div>
+          <div class="sk-body">
+            <div class="skeleton" style="width: 30%; height: 1.25rem"></div>
+            <div class="skeleton" style="width: 80%; height: 1.25rem"></div>
+            <div class="skeleton" style="width: 55%; height: 1rem"></div>
           </div>
-          <div class="rl-field">
-            <label class="gourmet-label">Categoria</label>
-            <input type="text" placeholder="Es. Primo, Dolce..." [(ngModel)]="filtri.category" class="gourmet-input">
-          </div>
-          <div class="rl-field">
-            <label class="gourmet-label">Tempo cottura (min)</label>
-            <input type="number" placeholder="Es. 30" [(ngModel)]="filtri.maxTime" class="gourmet-input">
-          </div>
-          <div class="rl-field">
-            <label class="gourmet-label">Sfida</label>
-            <div class="gourmet-dropdown" (click)="toggleDropdown()" [class.active]="isDropdownOpen">
-              <div class="dropdown-selected">
-                {{ getSelectedLabel() }}
-                <span class="dropdown-arrow"></span>
-              </div>
-              <div class="dropdown-menu">
-                <div class="dropdown-item" (click)="selectDifficulty(''); $event.stopPropagation()">✨ Ogni Difficoltà</div>
-                <div class="dropdown-item" (click)="selectDifficulty('FACILE'); $event.stopPropagation()">🟢 Facile</div>
-                <div class="dropdown-item" (click)="selectDifficulty('MEDIO'); $event.stopPropagation()">🟡 Medio</div>
-                <div class="dropdown-item" (click)="selectDifficulty('DIFFICILE'); $event.stopPropagation()">🔴 Difficile</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="rl-filters-actions">
-          <button class="rl-btn-reset" (click)="resetFiltri()">
-            <span class="icon">↺</span> Reset
-          </button>
-          <button class="rl-btn-search" (click)="applicaFiltri()">
-            Applica Filtri
-          </button>
-        </div>
-      </section>
-
-      @if (loading) {
-        <div class="gourmet-loader">
-          <div class="loader-chef">👨‍🍳</div>
-          <p>Preparazione della sala...</p>
-        </div>
-      } @else {
-        <div class="rl-recipes-grid">
-          @for (ricetta of ricette; track ricetta.id) {
-            <article class="rl-card-premium">
-              <div class="card-img-wrapper">
-                <img [src]="ricetta.immagineURL || 'assets/default.jpg'" [alt]="ricetta.titolo">
-
-                @if (ricetta.id !== undefined && ratingMedioMap[ricetta.id] > 0) {
-                  <div class="rating-overlay">
-                    <span class="star-icon">★</span>
-                    <span>{{ ratingMedioMap[ricetta.id] | number:'1.1-1' }}</span>
-                  </div>
-                }
-
-                <div class="difficulty-overlay">{{ ricetta.difficolta }}</div>
-              </div>
-
-              <div class="card-content">
-                <div class="card-top-flex">
-                  <span class="category-tag">{{ ricetta.categoria || 'Gourmet' }}</span>
-                </div>
-
-                <h3>{{ ricetta.titolo }}</h3>
-
-                <div class="card-meta">
-                  <span>👤 {{ ricetta.autore || 'Chef Anonimo' }}</span>
-                  <span class="dot">•</span>
-                  <span>⏱ {{ ricetta.tempoCottura }} min</span>
-                </div>
-
-                <button class="btn-explore" [routerLink]="['/recipe', ricetta.id]">
-                  Scopri Ricetta
-                </button>
-              </div>
-            </article>
-          } @empty {
-            <div class="rl-empty-state">
-              <div class="empty-icon">🍳</div>
-              <h3>Nessun piatto trovato, Chef!</h3>
-              <p>Non abbiamo trovato ricette che corrispondano ai tuoi filtri.</p>
-              <button class="btn-reset-light" (click)="resetFiltri()">Mostra tutte</button>
-            </div>
-          }
         </div>
       }
     </div>
-  </main>
-  <app-footer></app-footer>
+  } @else if (error) {
+    <div class="state state--error" role="alert">
+      <span class="state__icon"><app-icon name="alert" [size]="28" /></span>
+      <h2>Non riusciamo a caricare le ricette</h2>
+      <p>Il server non risponde. Controlla la connessione o riprova tra qualche istante.</p>
+      <button type="button" class="btn btn--primary" (click)="caricaRicette()"><app-icon name="refresh" [size]="18" /> Riprova</button>
+    </div>
+  } @else if (ricette.length === 0) {
+    <div class="state">
+      <span class="state__icon"><app-icon name="search" [size]="28" /></span>
+      @if (hasFilters) {
+        <h2>Nessuna ricetta con questi filtri</h2>
+        <p>Prova ad allargare la ricerca: togli un filtro o cerca un ingrediente diverso.</p>
+        <button type="button" class="btn btn--primary" (click)="resetFiltri()">Mostra tutte le ricette</button>
+      } @else {
+        <h2>Il ricettario è ancora vuoto</h2>
+        <p>Nessuna ricetta pubblicata finora. Inizia tu: le nuove ricette appaiono dopo l'approvazione.</p>
+        <a routerLink="/recipe-create" class="btn btn--primary"><app-icon name="plus" [size]="18" /> Scrivi una ricetta</a>
+      }
+    </div>
+  } @else {
+    <div class="recipe-grid">
+      @for (ricetta of ricette.slice(0, visible); track ricetta.id) {
+        <app-recipe-card [recipe]="ricetta" [rating]="ratingMedioMap[ricetta.id!]" [eager]="$index < 3" />
+      }
+    </div>
+    @if (visible < ricette.length) {
+      <div class="more">
+        <button type="button" class="btn" (click)="mostraAltre()">Mostra altre ricette ({{ ricette.length - visible }})</button>
+      </div>
+    }
+  }
 </div>
-</html>

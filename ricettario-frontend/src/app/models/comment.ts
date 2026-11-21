@@ -1,5 +1,5 @@
 export interface Commenti {
-  id? : number;
+  id?: number;
   content: string;
   authUsername: string;
   createDate: string;

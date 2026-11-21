@@ -1,38 +1,29 @@
 package ricettariobackend.RestController;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import ricettariobackend.DAO.UtenteDAO;
 import ricettariobackend.DTO.RecipeFilterDTO;
 import ricettariobackend.DTO.RicettaDTO;
-import ricettariobackend.Proxy.UtenteDAOProxy;
 import ricettariobackend.Service.RicetteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ricettariobackend.Utility.JwtUtil;
+import ricettariobackend.Utility.CurrentUser;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/recipes")
-@CrossOrigin(origins = "http://localhost:4200")
 public class RicettaController {
 
-    private RicetteService ricettaService = new RicetteService();
+    private final RicetteService ricettaService;
+    private final CurrentUser currentUser;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    private UtenteDAO utenteDAO = new UtenteDAOProxy();
+    public RicettaController(RicetteService ricettaService, CurrentUser currentUser) {
+        this.ricettaService = ricettaService;
+        this.currentUser = currentUser;
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<RicettaDTO> getRicettaById(@PathVariable int id) {
-        try {
-            RicettaDTO ricetta = ricettaService.getRicettaDetailById(id);
-            return ResponseEntity.ok(ricetta);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(ricettaService.getRicettaDetailById(id));
     }
 
     @GetMapping("/recipe-list")
@@ -67,9 +58,11 @@ public class RicettaController {
     }
 
     @PostMapping("/recipe-create")
-    public ResponseEntity<Boolean> saveFromForm(@RequestBody RicettaDTO dto) {
+    public ResponseEntity<Boolean> saveFromForm(@RequestBody RicettaDTO dto,
+                                                @RequestHeader(value = "Authorization", required = false) String token) {
+        int userId = currentUser.require(token).getId();
         try {
-            boolean salvata = ricettaService.saveRicettaFromForm(dto);
+            boolean salvata = ricettaService.saveRicettaFromForm(dto, userId);
             return ResponseEntity.ok(salvata);
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,53 +71,31 @@ public class RicettaController {
     }
 
     @PutMapping("/recipe-edit/{id}")
-    public ResponseEntity<Boolean> updateRecipe(@RequestBody RicettaDTO dto) {
-        try {
-            boolean salvata = ricettaService.updateRicetta(dto);
-            return ResponseEntity.ok(salvata);
-        } catch (Exception e) {
-            System.err.println("Messaggio: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<Boolean> updateRecipe(@PathVariable int id, @RequestBody RicettaDTO dto,
+                                                @RequestHeader(value = "Authorization", required = false) String token) {
+        return ResponseEntity.ok(ricettaService.updateRicetta(id, dto, currentUser.require(token)));
     }
 
     @GetMapping("/favorites")
-    public ResponseEntity<List<RicettaDTO>> getFavorites(@RequestHeader("Authorization") String token) {
-        Integer userId = getUserIdFromToken(token);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<List<RicettaDTO>> getFavorites(@RequestHeader(value = "Authorization", required = false) String token) {
+        int userId = currentUser.require(token).getId();
 
         List<RicettaDTO> preferiti = ricettaService.getFavorites(userId);
         return ResponseEntity.ok(preferiti);
     }
 
     @GetMapping("/{id}/favorite/check")
-    public ResponseEntity<Boolean> isFavourite(@PathVariable int id, @RequestHeader("Authorization") String token) {
-        Integer userId = getUserIdFromToken(token);
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-        }
+    public ResponseEntity<Boolean> isFavourite(@PathVariable int id, @RequestHeader(value = "Authorization", required = false) String token) {
+        int userId = currentUser.require(token).getId();
         boolean isFav = ricettaService.isRecipeInFavorites(userId, id);
         return ResponseEntity.ok(isFav);
     }
 
     @PostMapping("/{id}/favorite")
-    public ResponseEntity<Void> toggleFavorite(@PathVariable int id, @RequestHeader("Authorization") String token) {
-        Integer userId = getUserIdFromToken(token);
+    public ResponseEntity<Void> toggleFavorite(@PathVariable int id, @RequestHeader(value = "Authorization", required = false) String token) {
+        int userId = currentUser.require(token).getId();
 
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        List<RicettaDTO> favorites = ricettaService.getFavorites(userId);
-
-        boolean isAlreadyFavorite = favorites.stream()
-                .anyMatch(r -> r.getId().equals(id));
-
-        if (isAlreadyFavorite) {
+        if (ricettaService.isRecipeInFavorites(userId, id)) {
             ricettaService.removeFromFavorites(userId, id);
         } else {
             ricettaService.addToFavorites(userId, id);
@@ -134,25 +105,10 @@ public class RicettaController {
     }
 
     @GetMapping("/{id}/favorite/count")
-    public ResponseEntity<Integer> getFavoritesCount(@RequestHeader("Authorization") String token) {
-        Integer userId = getUserIdFromToken(token);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(0);
-        }
+    public ResponseEntity<Integer> getFavoritesCount(@RequestHeader(value = "Authorization", required = false) String token) {
+        int userId = currentUser.require(token).getId();
 
         int count = ricettaService.countFavoritesByUserId(userId);
         return ResponseEntity.ok(count);
-    }
-
-    private Integer getUserIdFromToken(String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            String jwt = token.substring(7);
-            String email = jwtUtil.extractEmail(jwt);
-            return utenteDAO.findByEmail(email)
-                    .map(u -> u.getId())
-                    .orElse(null);
-        }
-        return null;
     }
 }

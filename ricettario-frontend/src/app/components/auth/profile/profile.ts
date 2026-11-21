@@ -1,106 +1,53 @@
-import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../../../services/authService';
-import { RecipeService } from '../../../services/serviziRicetta';
-import { Utente } from '../../../models/user';
-import { Ricetta } from '../../../models/ricetta';
-import { RouterModule } from '@angular/router';
+import { Component, OnDestroy, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { Navbar } from '../../shared/navbar/navbar';
-import { Footer } from '../../shared/footer/footer';
+import { RouterLink } from '@angular/router';
+import { AuthService } from '../../../services/authService';
+import { Icon } from '../../shared/icon/icon';
 
 @Component({
   selector: 'app-profile',
-  standalone: true,
-  imports: [
-    RouterModule,
-    FormsModule,
-    CommonModule,
-    Navbar,
-    Footer
-  ],
+  imports: [FormsModule, RouterLink, Icon],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
-export class Profile implements OnInit {
-  utente: Utente | null = null;
-  mieRicette: Ricetta[] = [];
-  preferiti: Ricetta[] = [];
-  loading: boolean = false;
-  nuovoUsername: string = '';
-  errorMess: string = '';
-  completeMess: string = '';
-  isDropdownOpen: boolean = false;
+export class Profile implements OnDestroy {
+  protected readonly auth = inject(AuthService);
+  private timer?: ReturnType<typeof setTimeout>;
 
-  constructor(
-    private authService: AuthService,
-    private recipeService: RecipeService
-  ) {}
+  nuovoUsername = this.auth.user()?.username ?? '';
+  loading = false;
+  errorMess = '';
+  completeMess = '';
 
-  ngOnInit() {
-    this.utente = this.authService.getCurrentUser();
-    if (this.utente) {
-      this.nuovoUsername = this.utente.username;
-      this.caricaDatiProfilo();
-    }
-  }
-
-  toggleDropdown(event: Event) {
-    event.stopPropagation();
-    this.isDropdownOpen = !this.isDropdownOpen;
-  }
-
-  mostraMessaggio(testo: string) {
-    this.completeMess = testo;
-    setTimeout(() => {
-      this.completeMess = '';
-    }, 2000);
-  }
-
-  salvaNuovoNome() {
+  salvaNuovoNome(): void {
     this.errorMess = '';
     this.completeMess = '';
-
-    if (!this.nuovoUsername || this.nuovoUsername.trim() === '') {
-      this.errorMess = "Il nome Chef non può essere vuoto.";
+    const nome = this.nuovoUsername.trim();
+    if (nome.length < 3) {
+      this.errorMess = 'Lo username deve avere almeno 3 caratteri.';
       return;
     }
-
-    if (this.nuovoUsername === this.utente?.username) {
-      this.errorMess = "Inserisci un nome diverso da quello attuale.";
+    if (nome === this.auth.user()?.username) {
+      this.errorMess = 'È già il tuo username attuale.';
       return;
     }
-
     this.loading = true;
-    this.authService.updateProfile(this.utente!.id, this.nuovoUsername).subscribe({
-      next: (userAggiornato) => {
-        this.utente = userAggiornato;
+    this.auth.updateProfile(nome).subscribe({
+      next: () => {
         this.loading = false;
-        this.errorMess = '';
-        this.mostraMessaggio('Username aggiornato con successo!');
+        this.completeMess = 'Username aggiornato.';
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => (this.completeMess = ''), 4000);
       },
-      error: (err) => {
-        this.errorMess = "Errore durante l'aggiornamento dello username";
+      error: (err: HttpErrorResponse) => {
         this.loading = false;
-      }
+        this.errorMess = err.status === 400 ? 'Username non disponibile: scegline un altro.' : 'Aggiornamento non riuscito. Riprova.';
+      },
     });
   }
 
-  caricaDatiProfilo() {
-    const username = this.utente?.username;
-    if (username) {
-      this.recipeService.getRecipes(0, 5, { author: username }).subscribe({
-        next: (res) => this.mieRicette = res.content,
-        error: (err) => console.error(err)
-      });
-    }
-  }
-
-  eliminaRicetta(recipeId: number) {
-    if (confirm('Sei sicuro di voler eliminare questa ricetta?')) {
-      this.recipeService.deleteRecipe(recipeId).subscribe(() => {
-        this.mieRicette = this.mieRicette.filter(r => r.id !== recipeId);
-      });
-    }
+  ngOnDestroy(): void {
+    clearTimeout(this.timer);
   }
 }

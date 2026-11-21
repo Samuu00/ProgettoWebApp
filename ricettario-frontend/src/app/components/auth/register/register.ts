@@ -1,154 +1,59 @@
-import { Component, HostListener } from '@angular/core';
-import { Router } from '@angular/router';
-import { AuthService } from '../../../services/authService';
+import { Component, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { Footer } from '../../shared/footer/footer';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../services/authService';
+import { AuthShell, PasswordRules } from '../auth-shell/auth-shell';
+import { isStrongPassword } from '../auth-shell/password-rules';
+import { Icon } from '../../shared/icon/icon';
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 @Component({
   selector: 'app-register',
-  standalone: true,
-  imports: [FormsModule, CommonModule, RouterModule, Footer],
+  imports: [FormsModule, RouterLink, AuthShell, PasswordRules, Icon],
   templateUrl: './register.html',
-  styleUrl: './register.css',
 })
 export class Register {
-  userData = {
-    username: '',
-    email: '',
-    password: '',
-    confirmPassw: '',
-    role: 'STANDARD'
-  };
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
-  inlineErrors = {
-    username: '',
-    email: '',
-    password: '',
-    confirmPassw: ''
-  };
-
+  userData = { username: '', email: '', password: '', confirmPassw: '' };
+  touched = { username: false, email: false, password: false, confirmPassw: false };
   showPassword = false;
-  showConfirmPassword = false;
+  loading = false;
+  errorMess = '';
 
-  togglePassword() {
-    this.showPassword = !this.showPassword;
+  get errors() {
+    const d = this.userData;
+    return {
+      username: d.username.trim().length < 3 ? 'Almeno 3 caratteri.' : '',
+      email: !EMAIL.test(d.email.trim()) ? 'Inserisci un indirizzo email valido.' : '',
+      password: !isStrongPassword(d.password) ? 'La password non rispetta i requisiti.' : '',
+      confirmPassw: d.confirmPassw !== d.password || !d.confirmPassw ? 'Le password non coincidono.' : '',
+    };
   }
 
-  toggleConfirmPassword() {
-    this.showConfirmPassword = !this.showConfirmPassword;
+  show(field: keyof Register['touched']): string {
+    return this.touched[field] ? this.errors[field] : '';
   }
 
-  lookRotation = 0;
-  isStealingRecipe = false;
-
-  @HostListener('document:mousemove', ['$event'])
-  onMouseMove(event: MouseEvent) {
-    if (this.isStealingRecipe) {
-      this.lookRotation = 0; // Se si nasconde, la testa torna dritta
-      return;
-    }
-
-    const centerX = window.innerWidth / 2;
-    const mouseX = event.clientX;
-
-    const offset = (mouseX - centerX) / centerX;
-
-    this.lookRotation = offset * 20;
-  }
-
-  setStealingRecipe(value: boolean) {
-    this.isStealingRecipe = value;
-  }
-
-  errorMess: string = '';
-
-  constructor(private authService: AuthService, private router: Router) {}
-
-  validateEmailInline() {
-    const email = this.userData.email;
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-    if (!email) {
-      this.inlineErrors.email = "L'email è obbligatoria";
-      return;
-    }
-
-    if (!emailRegex.test(email)) {
-      this.inlineErrors.email = "Inserisci un indirizzo email valido (es. chef@gmail.com)";
-      return;
-    }
-
-    const allowedDomains = ['gmail.com', 'outlook.it', 'hotmail.com', 'yahoo.com', 'outlook.com', 'icloud.com'];
-    const domain = email.split('@')[1].toLowerCase();
-
-    if (!allowedDomains.includes(domain)) {
-      this.inlineErrors.email = `Il dominio @${domain} non è esistente`;
-    } else {
-      this.inlineErrors.email = '';
-    }
-  }
-
-  validatePasswordInline() {
-    const password = this.userData.password;
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
-    if (!password) {
-      this.inlineErrors.password = 'La password è obbligatoria';
-    } else if (password.length < 8) {
-      this.inlineErrors.password = 'Deve essere lunga almeno 8 caratteri';
-    } else if (!/[A-Z]/.test(password)) {
-      this.inlineErrors.password = 'Aggiungi almeno una lettera maiuscola';
-    } else if (!/\d/.test(password)) {
-      this.inlineErrors.password = 'Aggiungi almeno un numero';
-    } else if (!/[@$!%*?&]/.test(password)) {
-      this.inlineErrors.password = 'Aggiungi un segno speciale (es. @, $, !, %, *, ?, &)';
-    } else if (!passwordRegex.test(password)) {
-      this.inlineErrors.password = 'Formato non valido';
-    } else {
-      this.inlineErrors.password = '';
-    }
-
-    this.validateConfirmPasswordInline();
-  }
-
-  validateConfirmPasswordInline() {
-    if (this.userData.password !== this.userData.confirmPassw) {
-      this.inlineErrors.confirmPassw = 'Le password non corrispondono';
-    } else {
-      this.inlineErrors.confirmPassw = '';
-    }
-  }
-
-  validateUsernameInline() {
-    if (this.userData.username.length < 3) {
-      this.inlineErrors.username = 'Lo username deve avere almeno 3 caratteri';
-    } else {
-      this.inlineErrors.username = '';
-    }
-  }
-
-  isFormInvalid(): boolean {
-    return !!(this.inlineErrors.email || this.inlineErrors.password ||
-      this.inlineErrors.confirmPassw || this.inlineErrors.username ||
-      !this.userData.username || !this.userData.email || !this.userData.password);
-  }
-
-  onRegister(){
+  onRegister(): void {
     this.errorMess = '';
-    const { confirmPassw, ...dataToSubmit } = this.userData;
-    this.authService.register(dataToSubmit).subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
+    this.touched = { username: true, email: true, password: true, confirmPassw: true };
+    if (Object.values(this.errors).some(Boolean)) return;
+
+    this.loading = true;
+    const { username, email, password } = this.userData;
+    this.auth.register({ username: username.trim(), email: email.trim(), password }).subscribe({
+      next: () => this.router.navigate(['/login'], { queryParams: { registered: 1 } }),
+      error: (err: HttpErrorResponse) => {
+        this.loading = false;
+        this.errorMess =
+          err.status === 400 || err.status === 409
+            ? 'Username o email già in uso. Prova con altri dati o accedi.'
+            : 'Registrazione non riuscita. Riprova tra qualche istante.';
       },
-      error: (err) => {
-        if(err.status === 409){
-          this.errorMess = 'Username o email già esistenti';
-        }else{
-          this.errorMess = 'Errore durante la registrazione, Riprova più tardi';
-        }
-      }
     });
   }
 }

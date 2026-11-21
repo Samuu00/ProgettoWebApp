@@ -1,98 +1,37 @@
-<html lang="it">
-<head>
-  <title>Il tuo profilo</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="profile.css">
-</head>
-<body>
-<div class="page-wrapper">
-  <app-navbar></app-navbar>
+<div class="container container--narrow page">
+  <header class="page-head"><div><h1>Profilo</h1><p>I dati del tuo account.</p></div></header>
 
-  <main class="prof-page-container">
-    <div class="prof-blob prof-b1"></div>
-    <div class="prof-blob prof-b2"></div>
-    <span class="prof-sketch prof-icon-1">👨‍🍳</span>
-    <span class="prof-sketch prof-icon-2">🔐</span>
+  @if (auth.user(); as u) {
+    <section class="id surface surface--pad" aria-label="Riepilogo account">
+      <span class="avatar avatar--lg">{{ u.username.charAt(0).toUpperCase() }}</span>
+      <div class="id__text">
+        <h2>{{ u.username }}</h2>
+        <p>{{ u.email }}</p>
+      </div>
+      <span class="chip" [class.chip--accent]="u.ruolo === 'ADMIN'">{{ u.ruolo === 'ADMIN' ? 'Amministratore' : 'Membro' }}</span>
+    </section>
 
-    <div class="prof-content-wrapper">
-
-      <nav class="adm-nav-section">
-        <div class="custom-dropdown">
-          <button type="button" class="dropdown-trigger" (click)="toggleDropdown($event)">
-      <span class="trigger-content">
-        <span class="icon-main">👤</span>
-        <span class="text">Gestisci Profilo</span>
-      </span>
-            <span class="arrow" [class.open]="isDropdownOpen">▼</span>
-          </button>
-
-          <ul class="dropdown-menu" [class.show]="isDropdownOpen">
-            <li><a routerLink="/dashboard">⚙️ Dashboard Chef</a></li>
-            <li><a routerLink="/favorites">❤️ I Miei Preferiti</a></li>
-            <li class="separator"></li>
-            <li><a routerLink="/recipe-create" class="special-link">✨ Crea Nuova Ricetta</a></li>
-          </ul>
+    <section class="surface surface--pad block" aria-labelledby="h-user">
+      <h2 id="h-user">Cambia username</h2>
+      <form class="row" (ngSubmit)="salvaNuovoNome()">
+        <div class="field grow">
+          <label for="uname">Nuovo username</label>
+          <input id="uname" name="username" class="input" [(ngModel)]="nuovoUsername" autocomplete="username" minlength="3" />
         </div>
-      </nav>
+        <button type="submit" class="btn btn--primary" [disabled]="loading">
+          @if (loading) { <span class="spinner" aria-hidden="true"></span> } Salva
+        </button>
+      </form>
+      <div aria-live="polite">
+        @if (errorMess) { <p class="alert"><app-icon name="alert" [size]="18" /> {{ errorMess }}</p> }
+        @if (completeMess) { <p class="alert alert--success"><app-icon name="check" [size]="18" /> {{ completeMess }}</p> }
+      </div>
+    </section>
 
-      <header class="adm-header">
-        <div class="header-title-box">
-          <span class="line"></span>
-          <h1>PROFILO CHEF</h1>
-          <span class="line"></span>
-        </div>
-        <p class="subtitle">Gestisci la tua identità e le tue credenziali d'accesso.</p>
-      </header>
-
-      <section class="hero-card">
-        <div class="card-left">
-          <div class="avatar-box">
-            <div class="avatar">{{ utente?.username?.charAt(0)?.toUpperCase() }}</div>
-          </div>
-          <div class="chef-details">
-            <h2 class="username">{{ utente?.username }}</h2>
-            <p class="email">{{ utente?.email }}</p>
-            @if(utente?.ruolo == 'ADMIN'){
-              <span class="badge">ADMIN</span>
-            }@else{
-            <span class="badge">USER</span>
-            }
-
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="card-right">
-          <form #profiloForm="ngForm" (ngSubmit)="salvaNuovoNome()">
-            <h3>SICUREZZA ACCOUNT</h3>
-            <div class="input-group">
-              <label>NUOVO USERNAME</label>
-              <div class="input-wrapper">
-                <span class="user-icon">👤</span>
-                <input type="text" name="username" [(ngModel)]="nuovoUsername" [placeholder]="utente?.username">
-              </div>
-            </div>
-            <button type="submit" class="save-btn">SALVA MODIFICHE</button>
-          </form>
-          @if (errorMess) {
-            <div class="message-box message-error">
-              <span>⚠️</span> {{ errorMess }}
-            </div>
-          }
-          @if (completeMess) {
-            <div class="message-box message-success">
-              <span>✅</span> {{ completeMess }}
-            </div>
-          }
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <app-footer></app-footer>
+    <section class="surface surface--pad block" aria-labelledby="h-pw">
+      <h2 id="h-pw">Password</h2>
+      <p class="muted">Per cambiarla ti mandiamo un link via email.</p>
+      <a routerLink="/forgot-password" class="btn"><app-icon name="lock" [size]="18" /> Reimposta password</a>
+    </section>
+  }
 </div>
-</body>
-</html>

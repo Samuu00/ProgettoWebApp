@@ -1,20 +1,26 @@
 package ricettariobackend.DAO;
 
-import ricettariobackend.Database.DbConnection;
+import org.springframework.stereotype.Repository;
 import ricettariobackend.Entity.Utenti;
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class UtenteDAOImpl implements UtenteDAO {
 
-    public UtenteDAOImpl() {}
+    private final DataSource dataSource;
+
+    public UtenteDAOImpl(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     @Override
     public boolean save(Utenti utente) {
         String sql = "INSERT INTO utenti (username, email, password) VALUES (?, ?, ?) RETURNING id, ruolo, stato";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, utente.getUsername());
             ps.setString(2, utente.getEmail());
@@ -36,7 +42,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public Optional<Utenti> findByUsername(String username) {
         String sql = "SELECT id, username, email, password, ruolo, stato FROM utenti WHERE username = ? LIMIT 1";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
@@ -51,7 +57,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public Optional<Utenti> findById(int id) {
         String sql = "SELECT id, username, email, password, ruolo, stato FROM utenti WHERE id = ? LIMIT 1";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -66,7 +72,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public boolean existsByUsername(String username) {
         String sql = "SELECT 1 FROM utenti WHERE username = ? LIMIT 1";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
@@ -81,7 +87,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public boolean update(Utenti utente) {
         String sql = "UPDATE utenti SET username = ?, password = ? WHERE id = ?";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, utente.getUsername());
             ps.setString(2, utente.getPassword());
@@ -96,7 +102,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public boolean updateUsername(String username, int id) {
         String sql = "UPDATE utenti SET username = ? WHERE id = ?";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             ps.setInt(2, id);
@@ -110,7 +116,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public boolean delete(Utenti utente) {
         String sql = "DELETE FROM utenti WHERE id = ?";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, utente.getId());
             return ps.executeUpdate() > 0;
@@ -123,7 +129,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public int countAll() {
         String sql = "SELECT COUNT(*) FROM utenti";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
@@ -137,7 +143,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     public List<Utenti> findByStatus(boolean status) {
         List<Utenti> utenti = new ArrayList<>();
         String sql = "SELECT id, username, email, password, ruolo, stato FROM utenti WHERE stato = ?";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBoolean(1, status);
             try (ResultSet rs = ps.executeQuery()) {
@@ -152,7 +158,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public void updateStatus(int id, boolean status) {
         String sql = "UPDATE utenti SET stato = ? WHERE id = ?";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBoolean(1, status);
             ps.setInt(2, id);
@@ -165,7 +171,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public boolean updateRole(int id, String nuovoRuolo) {
         String sql = "UPDATE utenti SET ruolo = ? WHERE id = ?";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nuovoRuolo.toUpperCase());
             ps.setInt(2, id);
@@ -180,7 +186,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     public List<Utenti> findAll() {
         List<Utenti> utenti = new ArrayList<>();
         String sql = "SELECT id, username, email, password, ruolo, stato FROM utenti ORDER BY username ASC";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) utenti.add(mappaUtente(rs));
@@ -193,7 +199,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public Optional<Utenti> findByEmail(String email) {
         String sql = "SELECT id, username, email, password, ruolo, stato FROM utenti WHERE email = ? LIMIT 1";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
@@ -208,7 +214,7 @@ public class UtenteDAOImpl implements UtenteDAO {
     @Override
     public boolean userStatus(int id) {
         String sql = "SELECT stato FROM utenti WHERE id = ? LIMIT 1";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {

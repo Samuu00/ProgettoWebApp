@@ -1,4 +1,4 @@
-import { Utente } from './user'
+import { Utente } from './user';
 
 export interface LoginRequest {
   username: string;
@@ -11,7 +11,7 @@ export interface RegisterRequest {
   password: string;
 }
 
-export interface AuthResponse{
+export interface AuthResponse {
   token: string;
   user: Utente;
 }

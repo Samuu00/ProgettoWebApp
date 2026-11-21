@@ -3,11 +3,18 @@ package ricettariobackend.Service;
 import org.springframework.stereotype.Service;
 import ricettariobackend.DAO.RatingDAO;
 import ricettariobackend.Entity.Ratings;
-import ricettariobackend.Proxy.RatingDAOProxy;
 
 @Service
 public class RatingService {
-    private RatingDAO ratingDAO = new RatingDAOProxy();
+    private final RatingDAO ratingDAO;
+
+    public RatingService(RatingDAO ratingDAO) {
+        this.ratingDAO = ratingDAO;
+    }
+
+    public static boolean isValidVote(Integer voto) {
+        return voto != null && voto >= 1 && voto <= 5;
+    }
 
     public boolean addRating(Ratings rating) {
         return ratingDAO.save(rating);

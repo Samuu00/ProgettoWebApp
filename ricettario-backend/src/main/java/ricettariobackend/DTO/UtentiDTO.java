@@ -1,5 +1,7 @@
 package ricettariobackend.DTO;
 
+import ricettariobackend.Entity.Utenti;
+
 public class UtentiDTO {
         private Integer id;
         private String username;
@@ -22,6 +24,10 @@ public class UtentiDTO {
         this.username = username;
         this.email = email;
         this.stato = stato;
+    }
+
+    public static UtentiDTO from(Utenti u) {
+        return new UtentiDTO(u.getId(), u.getRuolo(), u.getUsername(), u.getEmail(), u.isStato());
     }
 
     public Integer getId() {

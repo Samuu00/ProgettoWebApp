@@ -1,157 +1,66 @@
-<html lang="it">
-<head>
-  <title>Recipe Moderation</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<div class="page-wrapper">
-  <app-navbar></app-navbar>
-
-  <main class="mod-page-container">
-    <div class="mod-blob mod-b1" aria-hidden="true"></div>
-    <div class="mod-blob mod-b2" aria-hidden="true"></div>
-
-    <span class="mod-sketch mod-icon-1" aria-hidden="true">📋</span>
-    <span class="mod-sketch mod-icon-2" aria-hidden="true">👨‍⚖️</span>
-
-    <div class="mod-content-wrapper">
-      <header class="mod-header">
-        <div class="header-title-box">
-          <span class="title-decorator"></span>
-          <h1>Moderazione Ricette</h1>
-          <span class="title-decorator"></span>
-        </div>
-
-        <nav class="tab-container" aria-label="Filtro stato ricette">
-          <button [class.active]="mostraSoloPendenti" (click)="toggleVisualizzazione(true)">
-            In Revisione
-          </button>
-          <button [class.active]="!mostraSoloPendenti" (click)="toggleVisualizzazione(false)">
-            Archivio Totale
-          </button>
-        </nav>
-      </header>
-
-      <section class="adm-nav-section">
-        <div class="custom-dropdown">
-          <button class="dropdown-trigger">
-            <span>🛡️ Moderazione Ricette</span>
-            <span class="arrow">▼</span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a routerLink="/admin/dashboard"><span class="icon">📊</span> Dashboard Main</a></li>
-            <li><a routerLink="/admin/users"><span class="icon">👥</span> Gestione Community</a></li>
-            <li><a routerLink="/admin/comment-moderation"><span class="icon">💬</span> Moderazione Commenti</a></li>
-          </ul>
-        </div>
-      </section>
-
-      <div class="table-card">
-        @if (loading) {
-          <div class="det-status-card">
-            <div class="det-loader">🍳</div>
-            <p>Lo Chef sta preparando i dati...</p>
-          </div>
-        } @else {
-          <div class="table-responsive">
-            <table class="mod-table">
-              <thead>
-              <tr>
-                <th>Piatto</th>
-                <th>Dettagli Ricetta</th>
-                <th>Stato attuale</th>
-                <th class="text-right">Azioni</th>
-              </tr>
-              </thead>
-              <tbody>
-                @for (ricetta of ricetteVisualizzate; track ricetta.id) {
-                  <tr>
-                    <td class="img-col">
-                      <div class="img-frame">
-                        <img [src]="ricetta.immagineURL || 'assets/placeholder-food.jpg'" alt="Anteprima">
-                      </div>
-                    </td>
-                    <td class="info-col">
-                      <span class="recipe-title">{{ ricetta.titolo }}</span>
-                      <span class="recipe-author">Chef: {{ ricetta.autore || 'Anonimo' }}</span>
-                      <div class="recipe-tags">
-                        <span class="tag">{{ ricetta.categoria || 'Gourmet' }}</span>
-                        <span class="tag diff">{{ ricetta.difficolta }}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span class="badge" [class.badge-pending]="ricetta.status === 'BOZZA'" [class.badge-approved]="ricetta.status === 'APPROVATA'">
-                        {{ ricetta.status }}
-                      </span>
-                    </td>
-                    <td class="actions-col">
-                      @if (ricetta.status === 'BOZZA') {
-                        <button routerLink="/admin/pending-recipe/{{ ricetta.id }}" class="btn-mod-view" title="Vedi Dettaglio Bozza">
-                          👁️
-                        </button>
-
-                        <button (click)="azioneApprova(ricetta.id!)" class="btn-mod-approve" title="Approva Istantaneamente">
-                          ✔️
-                        </button>
-                      }
-
-                      @if (ricetta.status === 'APPROVATA') {
-                        <button routerLink="/recipe/{{ ricetta.id }}" class="btn-mod-view" title="Vedi Dettaglio Bozza">
-                          👁️
-                        </button>
-                      }
-
-                      <button (click)="ricetta.status === 'BOZZA' ? azioneEliminaBozza(ricetta.id!) : azioneElimina(ricetta.id!)" class="btn-mod-delete" title="Elimina">
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          @if (ricetteVisualizzate.length === 0) {
-            <div class="empty-state">
-              <span class="empty-emoji">✨</span>
-              <p>Tutto in ordine! Nessuna ricetta da revisionare.</p>
-            </div>
-          }
-        }
-      </div>
-    </div>
-  </main>
-
-  @if(mostraConfermaEliminazioneBozza){
-    <div class="mod-overlay">
-      <div class="mod-modal-card">
-        <div class="mod-modal-icon">⚠️</div>
-        <h2>Eliminare Bozza?</h2>
-        <p>Stai scartando questa richiesta. Verrà rimossa definitivamente dalla coda di moderazione.</p>
-        <div class="mod-modal-actions">
-          <button class="btn-modal-cancel" (click)="annullaEliminazioneBozza()">Ripensaci</button>
-          <button class="btn-modal-confirm" (click)="confermaEliminazioneBozza()">Sì, scarta bozza</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  @if (mostraConfermaEliminazione) {
-    <div class="mod-overlay">
-      <div class="mod-modal-card">
-        <div class="mod-modal-icon">⚠️</div>
-        <h2>Sei sicuro, Chef?</h2>
-        <p>Questa ricetta è già pubblica. Verrà rimossa definitivamente dal ricettario!</p>
-        <div class="mod-modal-actions">
-          <button class="btn-modal-cancel" (click)="annullaEliminazione()">Ripensaci</button>
-          <button class="btn-modal-confirm" (click)="confermaEliminazioneEffettiva()">Sì, elimina ricetta</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <app-footer></app-footer>
+<div class="page-head">
+  <div><h2>Ricette</h2><p>Approva le bozze inviate dalla community o rimuovi quelle già pubblicate.</p></div>
+  <div class="segmented" role="tablist" aria-label="Stato ricette">
+    <button type="button" role="tab" [attr.aria-selected]="mostraSoloPendenti" (click)="setTab(true)">In revisione</button>
+    <button type="button" role="tab" [attr.aria-selected]="!mostraSoloPendenti" (click)="setTab(false)">Pubblicate</button>
+  </div>
 </div>
-</body>
-</html>
+
+@if (actionError) { <p class="alert" role="alert"><app-icon name="alert" [size]="18" /> {{ actionError }}</p> }
+
+@if (loading) {
+  <div class="surface skel" aria-busy="true">@for (s of [1, 2, 3, 4]; track s) { <div class="skeleton" style="height: 3.5rem"></div> }</div>
+} @else if (error) {
+  <div class="state state--error" role="alert">
+    <span class="state__icon"><app-icon name="alert" [size]="28" /></span>
+    <h3>Impossibile caricare le ricette</h3>
+    <p>{{ error }}</p>
+    <button type="button" class="btn btn--primary" (click)="caricaDati()">Riprova</button>
+  </div>
+} @else if (ricette.length === 0) {
+  <div class="state">
+    <span class="state__icon"><app-icon name="check" [size]="28" /></span>
+    <h3>{{ mostraSoloPendenti ? 'Nessuna bozza in attesa' : 'Nessuna ricetta pubblicata' }}</h3>
+    <p>{{ mostraSoloPendenti ? 'Hai revisionato tutto. Torna più tardi.' : 'Le ricette approvate appariranno qui.' }}</p>
+  </div>
+} @else {
+  <div class="surface table-wrap">
+    <table class="table">
+      <thead><tr><th>Ricetta</th><th>Dettagli</th><th>Stato</th><th class="actions">Azioni</th></tr></thead>
+      <tbody>
+        @for (r of ricette; track r.id) {
+          <tr>
+            <td data-label="Ricetta">
+              <div class="who">
+                @if (r.immagineURL) { <img [src]="r.immagineURL" alt="" class="thumb" loading="lazy" /> }
+                @else { <span class="thumb thumb--empty"></span> }
+                <div><div class="cell-title">{{ r.titolo }}</div><div class="cell-sub">di {{ r.autore || 'anonimo' }}</div></div>
+              </div>
+            </td>
+            <td data-label="Dettagli"><div class="cluster tight"><span class="chip chip--neutral">{{ r.categoria || '—' }}</span><app-difficulty [value]="r.difficolta" /></div></td>
+            <td data-label="Stato">
+              <span class="chip" [class.chip--warning]="isDraft(r)" [class.chip--success]="!isDraft(r)">{{ isDraft(r) ? 'In revisione' : 'Pubblicata' }}</span>
+            </td>
+            <td class="actions">
+              <div class="cluster">
+                <a class="btn btn--ghost btn--icon btn--sm" [routerLink]="isDraft(r) ? ['/admin/pending-recipe', r.id] : ['/recipe', r.id]" [attr.aria-label]="'Apri ' + r.titolo"><app-icon name="eye" [size]="18" /></a>
+                @if (isDraft(r)) {
+                  <button type="button" class="btn btn--primary btn--sm" (click)="approva(r)" [disabled]="busyId === r.id"><app-icon name="check" [size]="16" /> Approva</button>
+                  <button type="button" class="btn btn--danger-soft btn--sm" (click)="chiedi(r, 'reject')">Scarta</button>
+                } @else {
+                  <button type="button" class="btn btn--danger-soft btn--icon btn--sm" (click)="chiedi(r, 'delete')" [attr.aria-label]="'Elimina ' + r.titolo"><app-icon name="trash" [size]="18" /></button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<app-confirm-dialog [open]="!!conferma"
+  [title]="conferma?.kind === 'reject' ? 'Scartare la bozza?' : 'Eliminare la ricetta?'"
+  [message]="conferma?.kind === 'reject' ? '«' + (conferma?.recipe?.titolo ?? '') + '» verrà rimossa dalla coda di revisione.' : '«' + (conferma?.recipe?.titolo ?? '') + '» è pubblica: verrà rimossa definitivamente dal ricettario.'"
+  [confirmLabel]="conferma?.kind === 'reject' ? 'Scarta bozza' : 'Elimina ricetta'"
+  [busy]="confirmBusy" [error]="confirmError" (confirm)="confermaAzione()" (cancel)="conferma = null" />

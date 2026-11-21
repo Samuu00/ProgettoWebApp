@@ -1,6 +1,5 @@
 package ricettariobackend.RestController;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,8 +12,11 @@ import java.util.List;
 @RequestMapping("/api/stats")
 public class StatsController {
 
-    @Autowired
-    private StatsService statsService = new StatsService();
+    private final StatsService statsService;
+
+    public StatsController(StatsService statsService) {
+        this.statsService = statsService;
+    }
 
     @GetMapping("/difficulty")
     public ResponseEntity<List<DifficultyStatsDTO>> getDifficultyStats() {

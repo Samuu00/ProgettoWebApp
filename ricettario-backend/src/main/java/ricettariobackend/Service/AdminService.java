@@ -1,56 +1,63 @@
 package ricettariobackend.Service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ricettariobackend.DAO.*;
 import ricettariobackend.DTO.RicettaDTO;
-import ricettariobackend.Proxy.RicettaDAOProxy;
-import ricettariobackend.Proxy.StatsDAOProxy;
-import ricettariobackend.Proxy.UtenteDAOProxy;
+import ricettariobackend.DTO.UtentiDTO;
 import ricettariobackend.Entity.Ricetta;
-import ricettariobackend.Entity.Utenti;
 
 import java.util.*;
 
+@Service
 public class AdminService {
 
-    private UtenteDAO utenteDAO = new UtenteDAOProxy();
-    private RicettaDAO ricettaDAO = new RicettaDAOProxy();
-    private StatsDAO statsDAO = new StatsDAOProxy();
+    private static final Set<String> RUOLI = Set.of("ADMIN", "STANDARD");
+
+    private final UtenteDAO utenteDAO;
+    private final RicettaDAO ricettaDAO;
+    private final StatsDAO statsDAO;
+
+    public AdminService(UtenteDAO utenteDAO, RicettaDAO ricettaDAO, StatsDAO statsDAO) {
+        this.utenteDAO = utenteDAO;
+        this.ricettaDAO = ricettaDAO;
+        this.statsDAO = statsDAO;
+    }
 
     public Map<String, Object> getDashboardStats() {
         return statsDAO.getFullDashboardStats();
     }
 
     public void updateUserRole(int id, String nuovoRuolo) {
-        utenteDAO.updateRole(id, nuovoRuolo);
+        if (nuovoRuolo == null || !RUOLI.contains(nuovoRuolo.toUpperCase())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ruolo non valido");
+        }
+        if (!utenteDAO.updateRole(id, nuovoRuolo)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
     }
 
-    public List<Utenti> getAllUsers() {
-        return utenteDAO.findAll();
+    // Restituisce DTO: l'entità Utenti contiene l'hash della password.
+    public List<UtentiDTO> getAllUsers() {
+        return utenteDAO.findAll().stream().map(UtentiDTO::from).toList();
     }
 
     public void changeUserStatus(int id) {
-        if (!utenteDAO.userStatus(id)) {
-            utenteDAO.updateStatus(id, true);
-        } else {
-            utenteDAO.updateStatus(id, false);
-        }
+        utenteDAO.updateStatus(id, !utenteDAO.userStatus(id));
     }
 
     public List<RicettaDTO> getPendingRecipes() {
-        List<Ricetta> ricette = ricettaDAO.findByStatus("BOZZA");
         List<RicettaDTO> ricetteDTO = new ArrayList<>();
-        for(Ricetta r:ricette)
-        {
-            RicettaDTO rDTO = new RicettaDTO(r);
-            ricetteDTO.add(rDTO);
+        for (Ricetta r : ricettaDAO.findByStatus("BOZZA")) {
+            ricetteDTO.add(new RicettaDTO(r));
         }
-        System.out.println(ricetteDTO);
         return ricetteDTO;
     }
 
     public RicettaDTO getPendingRecipeById(int id) {
-        Optional<Ricetta> r = ricettaDAO.getPendingRecipeById(id);
-        return r.map(RicettaDTO::new).orElseThrow(() -> new RuntimeException("Ricetta non trovata"));
+        return ricettaDAO.getPendingRecipeById(id).map(RicettaDTO::new)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ricetta non trovata"));
     }
 
     public void approveRecipe(int id) {

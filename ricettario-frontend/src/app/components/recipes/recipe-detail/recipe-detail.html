@@ -1,182 +1,185 @@
-<html lang="it">
-<head>
-  <title>Recipe Detail</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<div class="page-wrapper">
-  <app-navbar></app-navbar>
-  <main class="det-page-container">
-    <div class="det-blob det-b1"></div>
-    <div class="det-blob det-b2"></div>
-    <div class="det-blob det-b3"></div>
+<div class="container page">
+  <a routerLink="/recipe-list" class="back-link"><app-icon name="arrow-left" [size]="18" /> Tutte le ricette</a>
 
-    <span class="det-sketch det-icon-1">🍲</span>
-    <span class="det-sketch det-icon-2">🧂</span>
-    <span class="det-sketch det-icon-3">🍷</span>
-    <span class="det-sketch det-icon-4">🥦</span>
-
-    <div class="det-content-wrapper">
-      @if (loading) {
-        <div class="det-status-card">
-          <div class="det-loader">🍳</div>
-          <p>Lo Chef sta preparando i dettagli...</p>
+  @switch (state) {
+    @case ('loading') {
+      <div class="hero-grid" aria-busy="true" aria-label="Caricamento ricetta">
+        <div class="skeleton hero-img"></div>
+        <div class="stack">
+          <div class="skeleton" style="height: 1.5rem; width: 25%"></div>
+          <div class="skeleton" style="height: 3rem; width: 85%"></div>
+          <div class="skeleton" style="height: 4rem"></div>
         </div>
-      }
+      </div>
+    }
+    @case ('notfound') {
+      <div class="state">
+        <span class="state__icon"><app-icon name="search" [size]="28" /></span>
+        <h1 class="h-state">Ricetta non trovata</h1>
+        <p>Potrebbe essere stata rimossa o non essere ancora stata approvata.</p>
+        <a routerLink="/recipe-list" class="btn btn--primary">Torna alle ricette</a>
+      </div>
+    }
+    @case ('error') {
+      <div class="state state--error" role="alert">
+        <span class="state__icon"><app-icon name="alert" [size]="28" /></span>
+        <h1 class="h-state">Qualcosa è andato storto</h1>
+        <p>Non riusciamo a raggiungere il server. Riprova tra qualche istante.</p>
+        <button type="button" class="btn btn--primary" (click)="caricaRicetta(ricetta?.id ?? 0)">Riprova</button>
+      </div>
+    }
+    @case ('ready') {
+      @if (ricetta; as r) {
+        <article>
+          <header class="hero-grid">
+            <div class="hero-img">
+              @if (r.immagineURL) {
+                <img [src]="r.immagineURL" [alt]="'Foto: ' + r.titolo" />
+              } @else {
+                <div class="hero-placeholder"><app-icon name="utensils" [size]="48" /></div>
+              }
+            </div>
 
-      @if (ricetta && !loading) {
-        <article class="det-card">
-          <div class="det-image-wrapper">
-            <img [src]="ricetta.immagineURL" [alt]="ricetta.titolo">
-            <span class="det-badge-diff">{{ ricetta.difficolta }}</span>
-          </div>
+            <div class="hero-info">
+              <span class="chip">{{ r.categoria || 'Senza categoria' }}</span>
+              <h1>{{ r.titolo }}</h1>
+              @if (r.descrizione) { <p class="lede">{{ r.descrizione }}</p> }
 
-          <div class="det-main-body">
-            <header class="det-header">
-              <div class="det-title-row">
-                <h1>{{ ricetta.titolo }}</h1>
+              <dl class="facts">
+                <div><dt>Tempo</dt><dd><app-icon name="clock" [size]="18" /> {{ r.tempoCottura }} min</dd></div>
+                <div><dt>Difficoltà</dt><dd><app-difficulty [value]="r.difficolta" /></dd></div>
+                <div><dt>Voto medio</dt>
+                  <dd>
+                    @if (ratingMedio > 0) {
+                      <app-icon name="star" [size]="18" [filled]="true" class="star-on" /> {{ ratingMedio | number: '1.1-1' }}
+                    } @else { <span class="muted">Nessun voto</span> }
+                  </dd>
+                </div>
+                <div><dt>Autore</dt><dd><app-icon name="chef-hat" [size]="18" /> {{ r.autore || 'Chef anonimo' }}</dd></div>
+              </dl>
 
-                @if (isFavorite) {
-                  <span class="det-fav-msg gold">
-                    <span class="icon">❤️</span> Salvata nei preferiti
-                  </span>
-                }
-
-                @if (ratingMedio > 0) {
-                  <div class="det-rating-badge" [title]="'Valutazione media community'">
-                    <span class="star">★</span>
-                    <span class="val">{{ ratingMedio | number:'1.1-1' }}</span>
-                  </div>
+              <div class="cluster">
+                <button type="button" class="btn" [class.btn--accent]="isFavorite" [class.btn--primary]="!isFavorite"
+                        [attr.aria-pressed]="isFavorite" (click)="toggleFavorite()" [disabled]="favBusy">
+                  <app-icon name="heart" [size]="18" [filled]="isFavorite" />
+                  {{ isFavorite ? 'Nei preferiti' : 'Salva nei preferiti' }}
+                </button>
+                @if (canEdit) {
+                  <a class="btn" [routerLink]="['/recipe-edit', r.id]"><app-icon name="pencil" [size]="18" /> Modifica</a>
                 }
               </div>
+              @if (favError) { <p class="field-error" role="alert">{{ favError }}</p> }
+            </div>
+          </header>
 
-              <div class="det-meta">
-                <span class="det-meta-item">👨‍🍳 <strong>{{ ricetta.autore }}</strong></span>
-                <span class="det-meta-item">⏱️ <strong>{{ ricetta.tempoCottura }} min</strong></span>
-              </div>
-              <p class="det-description">{{ ricetta.descrizione }}</p>
-            </header>
-
-            <hr class="det-divider">
-
-            <div class="det-grid-info">
-              <section class="det-ingredients">
-                <h2><span class="icon">🛒</span> Ingredienti</h2>
+          <div class="body-grid">
+            <aside class="ingredients surface" aria-labelledby="h-ingr">
+              <h2 id="h-ingr">Ingredienti</h2>
+              @if (r.ingredienti.length) {
+                <p class="hint">Spunta ciò che hai già sul piano di lavoro.</p>
                 <ul>
-                  @for (ing of ricetta.ingredienti; track ing.name) {
+                  @for (ing of r.ingredienti; track $index) {
                     <li>
-                      <span class="ing-qta">{{ ing.quantita }} {{ ing.unitaMis }}</span>
-                      <span class="ing-name">{{ ing.name }}</span>
+                      <label [class.done]="checked.has($index)">
+                        <input type="checkbox" [checked]="checked.has($index)" (change)="toggleCheck($index)" />
+                        <span class="qty">{{ ing.quantita }} {{ ing.unitaMis }}</span>
+                        <span>{{ ing.name }}</span>
+                      </label>
                     </li>
                   }
                 </ul>
-              </section>
+              } @else {
+                <p class="muted">Nessun ingrediente indicato.</p>
+              }
+            </aside>
 
-              <section class="det-instructions">
-                <h2><span class="icon">📝</span> Preparazione</h2>
-                <p style="white-space: pre-line;">{{ ricetta.istruzioni }}</p>
-              </section>
-            </div>
-
-            <section class="det-rating-section">
-              <h2><span class="icon">⭐</span> Valuta questa ricetta</h2>
-
-              <div class="rating-stars" [class.disabled]="alrVoted">
-                @for (stella of [1, 2, 3, 4, 5]; track stella) {
-                  <span
-                    class="star-icon"
-                    [class.filled]="stella <= (hoverRating || votoUtente)"
-                    (mouseenter)="!alrVoted && setHover(stella)"
-                    (mouseleave)="!alrVoted && setHover(0)"
-                    (click)="!alrVoted && vota(stella)">★
-                  </span>
-                }
-              </div>
-
-              <p class="rating-text">
-                @if (alrVoted) {
-                  <strong>✅ Hai già valutato questa ricetta. Grazie!</strong>
-                } @else if (votoUtente > 0) {
-                  Hai valutato questa ricetta con <strong>{{ votoUtente }} stelle</strong>. Grazie!
+            <div class="main-col">
+              <section aria-labelledby="h-steps">
+                <h2 id="h-steps">Preparazione</h2>
+                @if (steps.length) {
+                  <ol class="steps">
+                    @for (s of steps; track $index) { <li>{{ s }}</li> }
+                  </ol>
                 } @else {
-                  Dai il tuo tocco di classe: seleziona da 1 a 5 stelle.
+                  <p class="muted">Nessuna istruzione indicata.</p>
                 }
-              </p>
-            </section>
+              </section>
 
-            @if (videoSafeUrl) {
-              <section class="det-video">
-                <h2><span class="icon">📺</span> Video Tutorial</h2>
-                <div class="video-container">
-                  <iframe
-                    [src]="videoSafeUrl"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen>
-                  </iframe>
+              @if (videoSafeUrl) {
+                <section aria-labelledby="h-video">
+                  <h2 id="h-video">Video tutorial</h2>
+                  <div class="video">
+                    <iframe [src]="videoSafeUrl" [title]="'Video tutorial: ' + r.titolo" loading="lazy"
+                            allow="encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                  </div>
+                </section>
+              }
+
+              <section class="rate surface" aria-labelledby="h-rate">
+                <div>
+                  <h2 id="h-rate">L'hai cucinata?</h2>
+                  <p class="muted" aria-live="polite">
+                    @if (votoUtente > 0) { Grazie! Hai dato {{ votoUtente }} {{ votoUtente === 1 ? 'stella' : 'stelle' }}. }
+                    @else if (alrVoted) { Hai già votato questa ricetta. Grazie! }
+                    @else { Dai un voto da 1 a 5 stelle. }
+                  </p>
+                  @if (ratingError) { <p class="field-error" role="alert">{{ ratingError }}</p> }
+                </div>
+                <div class="stars" role="group" aria-label="Il tuo voto" (mouseleave)="hoverRating = 0">
+                  @for (s of stars; track s) {
+                    <button type="button" class="star" [class.on]="s <= (hoverRating || votoUtente)"
+                            [disabled]="alrVoted" (mouseenter)="hoverRating = s" (focus)="hoverRating = s" (blur)="hoverRating = 0"
+                            (click)="vota(s)" [attr.aria-label]="'Vota ' + s + (s === 1 ? ' stella' : ' stelle')">
+                      <app-icon name="star" [size]="28" [filled]="s <= (hoverRating || votoUtente)" />
+                    </button>
+                  }
                 </div>
               </section>
-            }
 
-            <hr class="det-divider">
+              <section aria-labelledby="h-comments">
+                <h2 id="h-comments">Commenti <span class="count">{{ commenti.length }}</span></h2>
 
-            <section class="det-comments">
-              <h2><span class="icon">💬</span> Commenti ({{ commenti.length }})</h2>
+                <form class="comment-form" (ngSubmit)="inviaCommento()">
+                  <label for="new-comment" class="label">Il tuo commento</label>
+                  <textarea id="new-comment" name="commento" class="textarea" rows="3" maxlength="1000"
+                            [(ngModel)]="nuovoCommento" placeholder="Com'è venuta? Varianti, consigli, sostituzioni…"></textarea>
+                  <div class="comment-form__foot">
+                    @if (commentError) { <p class="field-error" role="alert">{{ commentError }}</p> }
+                    <button type="submit" class="btn btn--primary btn--sm" [disabled]="!nuovoCommento.trim() || sending">
+                      @if (sending) { <span class="spinner" aria-hidden="true"></span> } Pubblica
+                    </button>
+                  </div>
+                </form>
 
-              <div class="comment-form">
-                <textarea
-                  [(ngModel)]="nuovoCommento"
-                  placeholder="Cosa ne pensi di questa ricetta? Scrivi qui..."
-                  rows="3">
-                </textarea>
-                <button (click)="inviaCommento()" [disabled]="!nuovoCommento.trim()">
-                  Invia Commento 🚀
-                </button>
-              </div>
-
-              <div class="comments-list">
-                @for (c of commenti; track c.id) {
-                  <div class="comment-item">
-                    <div class="comment-header">
-                      <div class="comment-user-info">
-                        <span class="comment-author">{{ c.authUsername }}</span>
-                        <span class="comment-date">{{ c.createDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                <ul class="comments">
+                  @for (c of commenti; track c.id) {
+                    <li class="comment">
+                      <span class="avatar">{{ (c.authUsername || '?').charAt(0).toUpperCase() }}</span>
+                      <div class="comment__body">
+                        <p class="comment__head">
+                          <strong>{{ c.authUsername }}</strong>
+                          <time [attr.datetime]="c.createDate">{{ c.createDate | date: 'd MMM yyyy, HH:mm' }}</time>
+                        </p>
+                        <p class="comment__text">{{ c.content }}</p>
                       </div>
-
-                      @if (authService.isAdmin() || (authService.getCurrentUser()?.username === c.authUsername)) {
-                        <button class="btn-delete-comment" (click)="eliminaCommento(c)" title="Elimina il tuo commento">
-                          🗑️
+                      @if (canDelete(c)) {
+                        <button type="button" class="btn btn--icon btn--sm btn--danger-soft" (click)="daEliminare = c" aria-label="Elimina commento">
+                          <app-icon name="trash" [size]="18" />
                         </button>
                       }
-                    </div>
-                    <p class="comment-content">{{ c.content }}</p>
-                  </div>
-                } @empty {
-                  <div class="no-comments">
-                    <span style="font-size: 2rem">✨</span>
-                    <p>Ancora nessun commento. Sii il primo!</p>
-                  </div>
-                }
-              </div>
-            </section>
-
-            <footer class="det-actions">
-              <button class="btn-back" routerLink="/recipe-list">⬅️ Torna alla lista</button>
-              @if(!isFavorite){
-                <button class="btn-fav" (click)="aggiungiAiPreferiti()">
-                  🤍 Salva nei Preferiti
-                </button>
-              }@else{
-                <button class="btn-fav" (click)="rimuoviDaiPreferiti()">
-                  ❤️ Rimuovi dai Preferiti
-                </button>
-              }
-            </footer>
+                    </li>
+                  } @empty {
+                    <li class="muted no-comments">Ancora nessun commento: raccontaci com'è andata.</li>
+                  }
+                </ul>
+              </section>
+            </div>
           </div>
         </article>
       }
-    </div>
-  </main>
-  <app-footer></app-footer>
+    }
+  }
 </div>
-</html>
+
+<app-confirm-dialog [open]="!!daEliminare" title="Eliminare il commento?" message="Il commento verrà rimosso definitivamente."
+                    [busy]="deleting" [error]="deleteError" (confirm)="confermaElimina()" (cancel)="chiudiElimina()" />

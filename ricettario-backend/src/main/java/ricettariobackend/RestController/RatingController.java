@@ -1,72 +1,46 @@
 package ricettariobackend.RestController;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ricettariobackend.DTO.RatingDTO;
 import ricettariobackend.Entity.Ratings;
 import ricettariobackend.Service.RatingService;
-import ricettariobackend.Utility.JwtUtil;
-import ricettariobackend.DAO.UtenteDAO;
-import ricettariobackend.Proxy.UtenteDAOProxy;
+import ricettariobackend.Utility.CurrentUser;
 
 @RestController
 @RequestMapping("/api/stats")
-@CrossOrigin(origins = "http://localhost:4200")
 public class RatingController {
 
-    @Autowired
-    private RatingService ratingService;
+    private final RatingService ratingService;
+    private final CurrentUser currentUser;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    private UtenteDAO utenteDAO = new UtenteDAOProxy();
-
-    private Integer getUserIdFromToken(String token) {
-        try {
-            if (token != null && token.startsWith("Bearer ")) {
-                String jwt = token.substring(7);
-                String email = jwtUtil.extractEmail(jwt);
-                return utenteDAO.findByEmail(email).map(u -> u.getId()).orElse(null);
-            }
-        } catch (Exception e) {
-            return null;
-        }
-        return null;
+    public RatingController(RatingService ratingService, CurrentUser currentUser) {
+        this.ratingService = ratingService;
+        this.currentUser = currentUser;
     }
 
-
     @PostMapping("/rating/{id}")
-    public ResponseEntity<?> addRating(@PathVariable int id, @RequestBody RatingDTO ratingData, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> addRating(@PathVariable int id, @RequestBody RatingDTO ratingData,
+                                       @RequestHeader(value = "Authorization", required = false) String auth) {
+        int userId = currentUser.require(auth).getId();
 
-        Integer userId = getUserIdFromToken(token);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        Integer voto = ratingData == null ? null : ratingData.getRating();
+        if (!RatingService.isValidVote(voto)) {
+            return ResponseEntity.badRequest().body("Il voto deve essere tra 1 e 5");
         }
 
-        Integer voto = ratingData.getRating();
-
-        Ratings rating = new Ratings(userId, id, voto);
-        boolean success = ratingService.addRating(rating);
-
-        if (success) {
+        if (ratingService.addRating(new Ratings(userId, id, voto))) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Hai già votato questa ricetta!");
         }
     }
+
     @GetMapping("/check-rating/{id}")
-    public ResponseEntity<Boolean> hasUserVoted(@PathVariable int id, @RequestHeader("Authorization") String token) {
-        Integer userId = getUserIdFromToken(token);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-        }
-
-        return ResponseEntity.ok(ratingService.hasUserVoted(userId, id));
+    public ResponseEntity<Boolean> hasUserVoted(@PathVariable int id,
+                                                @RequestHeader(value = "Authorization", required = false) String auth) {
+        return ResponseEntity.ok(ratingService.hasUserVoted(currentUser.require(auth).getId(), id));
     }
 
     @GetMapping("/ratings/{id}")

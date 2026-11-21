@@ -3,17 +3,22 @@ package ricettariobackend.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ricettariobackend.DTO.CommentDTO;
-import ricettariobackend.Entity.Commento;
 import ricettariobackend.Service.CommentiService;
+import ricettariobackend.Utility.CurrentUser;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/commenti")
-@CrossOrigin(origins = "http://localhost:4200")
 public class CommentiController {
 
-    private CommentiService commentiService = new CommentiService();
+    private final CommentiService commentiService;
+    private final CurrentUser currentUser;
+
+    public CommentiController(CommentiService commentiService, CurrentUser currentUser) {
+        this.commentiService = commentiService;
+        this.currentUser = currentUser;
+    }
 
     @GetMapping("/ricetta/{id}")
     public ResponseEntity<List<CommentDTO>> getCommenti(@PathVariable int id) {
@@ -21,8 +26,9 @@ public class CommentiController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> addCommento(@RequestBody CommentDTO commentoDto) {
-        CommentDTO salvato = commentiService.addCommentoAndReturn(commentoDto);
+    public ResponseEntity<?> addCommento(@RequestBody CommentDTO commentoDto,
+                                         @RequestHeader(value = "Authorization", required = false) String auth) {
+        CommentDTO salvato = commentiService.addCommentoAndReturn(commentoDto, currentUser.require(auth));
 
         if (salvato != null) {
             return ResponseEntity.ok(salvato);
@@ -32,18 +38,15 @@ public class CommentiController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteCommento(@PathVariable int id) {
-        boolean successo = commentiService.deleteCommento(id);
-        if (successo) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<Void> deleteCommento(@PathVariable int id,
+                                               @RequestHeader(value = "Authorization", required = false) String auth) {
+        commentiService.deleteCommento(id, currentUser.require(auth));
+        return ResponseEntity.ok().build();
     }
-//aa
+
+    // Solo ADMIN: vedi interceptor in Utility/WebConfig.
     @GetMapping("/all")
     public ResponseEntity<List<CommentDTO>> getCommenti() {
-        List<CommentDTO> commenti= commentiService.getAllComments();
-        return ResponseEntity.ok(commenti);
+        return ResponseEntity.ok(commentiService.getAllComments());
     }
 }

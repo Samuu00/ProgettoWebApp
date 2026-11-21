@@ -1,72 +1,74 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { RecipeService } from '../../../services/serviziRicetta';
-import { Ricetta } from '../../../models/ricetta';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { Footer } from '../../shared/footer/footer';
-import { Navbar } from '../../shared/navbar/navbar';
 import { StatService } from '../../../services/statService';
-import { Rating } from '../../../models/rating';
+import { Ricetta } from '../../../models/ricetta';
+import { RecipeCard } from '../../shared/recipe-card/recipe-card';
+import { Icon } from '../../shared/icon/icon';
 
 @Component({
   selector: 'app-favorites',
-  standalone: true,
-  imports: [CommonModule, RouterModule, Footer, Navbar],
+  imports: [RouterLink, RecipeCard, Icon],
   templateUrl: './favorites.html',
   styleUrl: './favorites.css',
 })
 export class Favorites implements OnInit {
+  private readonly recipeService = inject(RecipeService);
+  private readonly statService = inject(StatService);
+  private readonly destroyRef = inject(DestroyRef);
+
   listaPreferiti: Ricetta[] = [];
-  loading: boolean = false;
-  ratingMedioMap: { [key: number]: number } = {};
+  ratingMedioMap: Record<number, number> = {};
+  loading = false;
+  error = false;
+  actionError = '';
+  removing = new Set<number>();
 
-  constructor(
-    private recipeService: RecipeService,
-    private statService: StatService
-  ) {}
-
-  ngOnInit() {
+  ngOnInit(): void {
     this.caricaPreferiti();
   }
 
-  caricaPreferiti() {
+  caricaPreferiti(): void {
     this.loading = true;
-    this.recipeService.getFavorites().subscribe({
-      next: (data) => {
-        this.listaPreferiti = data;
+    this.error = false;
+    this.recipeService
+      .getFavorites()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.listaPreferiti = data ?? [];
+          this.loading = false;
+          this.listaPreferiti.forEach((r) => r.id != null && this.caricaRating(r.id));
+        },
+        error: () => {
+          this.loading = false;
+          this.error = true;
+        },
+      });
+  }
 
-        this.listaPreferiti.forEach(ricetta => {
-          if (ricetta.id) {
-            this.caricaRating(ricetta.id);
-          }
-        });
-
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Errore nel caricamento dei preferiti', err);
-        this.loading = false;
-      }
+  private caricaRating(id: number): void {
+    this.statService.getRatings(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (v) => (this.ratingMedioMap[id] = v),
+      error: () => {},
     });
   }
 
-  caricaRating(id: number) {
-    this.statService.getRatings(id).subscribe({
-      next: (res: any) => {
-        this.ratingMedioMap[id] = res;
-      },
-      error: (err) => console.error('Errore caricamento rating', err)
-    });
-  }
-
-  rimuoviDaiPreferiti(recipeId: number) {
-    this.recipeService.toggleFavorite(recipeId).subscribe({
+  rimuoviDaiPreferiti(recipe: Ricetta): void {
+    const id = recipe.id;
+    if (id == null || this.removing.has(id)) return;
+    this.removing.add(id);
+    this.actionError = '';
+    this.recipeService.toggleFavorite(id).subscribe({
       next: () => {
-        this.listaPreferiti = this.listaPreferiti.filter(r => r.id !== recipeId);
+        this.removing.delete(id);
+        this.listaPreferiti = this.listaPreferiti.filter((r) => r.id !== id);
       },
-      error: (err) => {
-        console.error('Errore rimozione:', err);
-      }
+      error: () => {
+        this.removing.delete(id);
+        this.actionError = `Non è stato possibile rimuovere «${recipe.titolo}». Riprova.`;
+      },
     });
   }
 }

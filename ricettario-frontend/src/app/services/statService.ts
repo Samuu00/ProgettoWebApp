@@ -1,18 +1,20 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, of, tap } from 'rxjs';
-import { Rating } from '../models/rating';
+import { Observable, map, of, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
-@Injectable({ providedIn: 'root'})
+const YT_ID = /^[\w-]{11}$/;
+
+@Injectable({ providedIn: 'root' })
 export class StatService {
-  private apiUrl = 'http://localhost:8080/api/stats';
-  private apiKey = process.env.API_KEY;
-  private videoCache = new Map<string, any>();
+  private apiUrl = `${environment.apiUrl}/stats`;
+  private videoCache = new Map<string, string | null>();
 
   constructor(private http: HttpClient) {}
 
-  getRatings(recipeId: number): Observable<Rating[]> {
-    return this.http.get<Rating[]>(`${this.apiUrl}/ratings/${recipeId}`);
+  /** Media voti della ricetta (il backend restituisce un numero, 0 se nessun voto). */
+  getRatings(recipeId: number): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/ratings/${recipeId}`).pipe(map((v) => Number(v) || 0));
   }
 
   checkRating(recipeId: number): Observable<boolean> {
@@ -23,20 +25,27 @@ export class StatService {
     return this.http.post<void>(`${this.apiUrl}/rating/${recipeId}`, { rating });
   }
 
-  getVideoTutorial(recipeTitle: string): Observable<any> {
-    if (this.videoCache.has(recipeTitle)) {
-      return of(this.videoCache.get(recipeTitle));
-    }
+  /** Restituisce un videoId YouTube validato, oppure null. Nessuna chiamata se manca la chiave. */
+  getVideoTutorialId(recipeTitle: string): Observable<string | null> {
+    if (!environment.youtubeApiKey) return of(null);
+    if (this.videoCache.has(recipeTitle)) return of(this.videoCache.get(recipeTitle) ?? null);
 
-    const query = encodeURIComponent(recipeTitle + ' ricetta tutorial');
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&videoEmbeddable=true&maxResults=1&key=${this.apiKey}`;
-
-    return this.http.get<any>(url).pipe(
-      tap(res => {
-        if (res.items && res.items.length > 0) {
-          this.videoCache.set(recipeTitle, res);
-        }
-      })
-    );
+    const params = {
+      part: 'snippet',
+      q: `${recipeTitle} ricetta tutorial`,
+      type: 'video',
+      videoEmbeddable: 'true',
+      maxResults: '1',
+      key: environment.youtubeApiKey,
+    };
+    return this.http
+      .get<{ items?: { id?: { videoId?: string } }[] }>('https://www.googleapis.com/youtube/v3/search', { params })
+      .pipe(
+        map((res) => {
+          const id = res.items?.[0]?.id?.videoId;
+          return id && YT_ID.test(id) ? id : null;
+        }),
+        tap((id) => this.videoCache.set(recipeTitle, id))
+      );
   }
 }

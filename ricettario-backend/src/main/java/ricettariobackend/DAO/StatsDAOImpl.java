@@ -1,20 +1,26 @@
 package ricettariobackend.DAO;
 
-import ricettariobackend.Database.DbConnection;
+import org.springframework.stereotype.Repository;
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
+@Repository
 public class StatsDAOImpl implements StatsDAO {
 
-    public StatsDAOImpl() {}
+    private final DataSource dataSource;
+
+    public StatsDAOImpl(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     @Override
     public Map<String, Integer> distribuzioneDifficolta() {
         Map<String, Integer> result = new HashMap<>();
         String sql = "SELECT difficolta, COUNT(*) AS tot FROM ricette GROUP BY difficolta";
 
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -38,7 +44,7 @@ public class StatsDAOImpl implements StatsDAO {
                 "(SELECT COUNT(*) FROM ricette WHERE difficolta = 'MEDIO') as count_medio, " +
                 "(SELECT COUNT(*) FROM ricette WHERE difficolta = 'DIFFICILE') as count_difficile";
 
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 

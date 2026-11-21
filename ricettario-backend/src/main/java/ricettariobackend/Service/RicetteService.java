@@ -1,37 +1,38 @@
 package ricettariobackend.Service;
 
-import ricettariobackend.DAO.PreferitiDAOimpl;
-import ricettariobackend.DAO.RicettaDAOImpl;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ricettariobackend.DAO.RicettaDAO;
 import ricettariobackend.DAO.PreferitiDAO;
-import ricettariobackend.DAO.UtenteDAO;
-import ricettariobackend.DAO.UtenteDAOImpl;
 import ricettariobackend.DTO.RecipeFilterDTO;
 import ricettariobackend.DTO.RicettaDTO;
-import ricettariobackend.Entity.Ingrediente;
 import ricettariobackend.Entity.Ricetta;
-import ricettariobackend.Proxy.PreferitiDAOProxy;
-import ricettariobackend.Proxy.RicettaDAOProxy;
-import ricettariobackend.Proxy.UtenteDAOProxy;
-import java.sql.Time;
+import ricettariobackend.Entity.Utenti;
+import ricettariobackend.Utility.CurrentUser;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Service
 public class RicetteService {
 
-    private RicettaDAO ricettaDAO = new RicettaDAOProxy();
-    private PreferitiDAO preferitiDAO = new PreferitiDAOProxy();
-    private UtenteDAO utenteDAOimpl = new UtenteDAOProxy();
+    private final RicettaDAO ricettaDAO;
+    private final PreferitiDAO preferitiDAO;
+
+    public RicetteService(RicettaDAO ricettaDAO, PreferitiDAO preferitiDAO) {
+        this.ricettaDAO = ricettaDAO;
+        this.preferitiDAO = preferitiDAO;
+    }
 
     public RicettaDTO getRicettaDetailById(int id) {
         Ricetta ricetta = ricettaDAO.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ricetta non trovata"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ricetta non trovata"));
         RicettaDTO r = new RicettaDTO(ricetta);
         return r;
     }
 
-    public boolean saveRicettaFromForm(RicettaDTO ricettaDTO) {
+    /** L'autore è l'utente autenticato, non l'idAutore inviato dal client. */
+    public boolean saveRicettaFromForm(RicettaDTO ricettaDTO, int idAutore) {
         Ricetta r = new Ricetta();
         r.setTitolo(ricettaDTO.getTitolo());
         r.setDescrizione(ricettaDTO.getDescrizione());
@@ -40,14 +41,19 @@ public class RicetteService {
         r.setTempoCottura(ricettaDTO.getTempoCottura());
         r.setImmagineURL(ricettaDTO.getImmagineURL());
         r.setCategoria(ricettaDTO.getCategoria());
-        r.setAutore(ricettaDTO.getIdAutore());
+        r.setAutore(idAutore);
         r.setIngredienti(ricettaDTO.listToString(ricettaDTO.getIngredienti()));
         return ricettaDAO.save(r);
     }
 
-    public boolean updateRicetta(RicettaDTO ricettaDTO) {
+    /** Solo l'autore della ricetta o un admin possono modificarla. */
+    public boolean updateRicetta(int id, RicettaDTO ricettaDTO, Utenti utente) {
+        Ricetta esistente = ricettaDAO.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ricetta non trovata"));
+        CurrentUser.requireOwnerOrAdmin(utente, esistente.getAutore());
+
         Ricetta r = new Ricetta();
-        r.setId(ricettaDTO.getId());
+        r.setId(id);
         r.setTitolo(ricettaDTO.getTitolo());
         r.setDescrizione(ricettaDTO.getDescrizione());
         r.setIstruzioni(ricettaDTO.getIstruzioni());
@@ -55,11 +61,7 @@ public class RicetteService {
         r.setTempoCottura(ricettaDTO.getTempoCottura());
         r.setImmagineURL(ricettaDTO.getImmagineURL());
         r.setCategoria(ricettaDTO.getCategoria());
-        r.setAutore(ricettaDTO.getIdAutore());
         r.setIngredienti(ricettaDTO.listToString(ricettaDTO.getIngredienti()));
-        System.out.println(r.getTitolo());
-        System.out.println(r.getId());
-
         return ricettaDAO.update(r);
     }
 

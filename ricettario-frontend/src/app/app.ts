@@ -1,14 +1,17 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import {Login} from './components/auth/login/login';
+import { Navbar } from './components/shared/navbar/navbar';
+import { Footer } from './components/shared/footer/footer';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  imports: [RouterOutlet, Navbar, Footer],
+  template: `
+    <a class="skip-link" href="#main">Salta al contenuto</a>
+    <app-navbar />
+    <main id="main" tabindex="-1"><router-outlet /></main>
+    <app-footer />
+  `,
+  styles: `:host { display: flex; flex-direction: column; min-height: 100dvh; } main { flex: 1; outline: none; }`,
 })
-export class App {
-  protected readonly title = signal('ricettario-frontend');
-}
+export class App {}

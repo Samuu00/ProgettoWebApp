@@ -1,22 +1,26 @@
 package ricettariobackend.RestController;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import ricettariobackend.DTO.AuthResponseDTO;
 import ricettariobackend.DTO.LoginDTO;
 import ricettariobackend.DTO.RegisterDTO;
 import ricettariobackend.DTO.UtentiDTO;
 import ricettariobackend.Service.AuthService;
+import ricettariobackend.Utility.CurrentUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:4200")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService = new AuthService();
+    private final AuthService authService;
+    private final CurrentUser currentUser;
+
+    public AuthController(AuthService authService, CurrentUser currentUser) {
+        this.authService = authService;
+        this.currentUser = currentUser;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDto) {
@@ -24,9 +28,6 @@ public class AuthController {
             AuthResponseDTO response = authService.login(loginDto);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-
-            System.out.println("Login error: " + e.getMessage());
-
             if ("Utente disabilitato".equals(e.getMessage())) {
                 return ResponseEntity.status(403).body("Account disabilitato");
             }
@@ -48,13 +49,13 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
+        // Risposta identica che l'email esista o no, per non permettere l'enumerazione degli utenti.
         try {
-            authService.requestPasswordReset(email);
-            return ResponseEntity.ok("Email di recupero inviata con successo!");
+            authService.requestPasswordReset(body.get("email"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            System.err.println("Invio email di reset fallito: " + e.getMessage());
         }
+        return ResponseEntity.ok("Se l'email è registrata, riceverai un link per reimpostare la password.");
     }
 
     @GetMapping("/verify-reset-token/{token}")
@@ -81,17 +82,14 @@ public class AuthController {
     }
 
     @PostMapping("/update-profile")
-    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> body) {
-        String username = (String) body.get("username");
-        Object idObj = body.get("id");
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> body,
+                                           @RequestHeader(value = "Authorization", required = false) String auth) {
+        // L'utente modificato è sempre quello del token: l'eventuale "id" nel body viene ignorato.
+        int id = currentUser.require(auth).getId();
+        Object usernameObj = body.get("username");
 
-        if(username == null || idObj == null) { return ResponseEntity.badRequest().body("Dati mancanti"); }
-
-        int id;
-
-        try{ id = Integer.parseInt(idObj.toString()); } catch (NumberFormatException e) {
-
-            return ResponseEntity.badRequest().body("ID utente non valido");
+        if (!(usernameObj instanceof String username) || username.isBlank()) {
+            return ResponseEntity.badRequest().body("Dati mancanti");
         }
         try {
 

@@ -1,5 +1,7 @@
 package ricettariobackend.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Utenti {
 
     private Integer id;
@@ -53,6 +55,7 @@ public class Utenti {
         this.email = email;
     }
 
+    @JsonIgnore
     public String getPassword() {
         return password;
     }

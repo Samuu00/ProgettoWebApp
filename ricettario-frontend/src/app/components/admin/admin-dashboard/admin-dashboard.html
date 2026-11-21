@@ -1,94 +1,38 @@
-<html lang="it">
-<head>
-  <title>Admin Dashboard</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="admin-dashboard.css">
-</head>
-<div class="page-wrapper">
-  <app-navbar></app-navbar>
+@if (loading) {
+  <div class="grid" aria-busy="true">
+    @for (s of [1, 2, 3]; track s) { <div class="skeleton" style="height: 7rem; border-radius: var(--r-lg)"></div> }
+  </div>
+} @else if (error) {
+  <div class="state state--error" role="alert">
+    <span class="state__icon"><app-icon name="alert" [size]="28" /></span>
+    <h2>Statistiche non disponibili</h2>
+    <p>{{ error }}</p>
+    <button type="button" class="btn btn--primary" (click)="carica()">Riprova</button>
+  </div>
+} @else if (stats) {
+  <dl class="grid">
+    <div class="stat surface"><dt>Utenti registrati</dt><dd>{{ stats.users ?? 0 }}</dd></div>
+    <div class="stat surface"><dt>Ricette totali</dt><dd>{{ stats.recipes ?? 0 }}</dd></div>
+    <div class="stat surface"><dt>Difficoltà più comune</dt><dd class="dd-text">{{ stats.mostCommonDiff || 'N/D' }}</dd></div>
+  </dl>
 
-  <main class="adm-page-container">
-    <div class="adm-blob adm-b1" aria-hidden="true"></div>
-    <div class="adm-blob adm-b2" aria-hidden="true"></div>
-    <span class="adm-sketch adm-icon-1" aria-hidden="true">📊</span>
-    <span class="adm-sketch adm-icon-2" aria-hidden="true">📈</span>
-
-    <div class="adm-content-wrapper">
-
-      <header class="adm-header">
-        <div class="header-title-box">
-          <span class="title-decorator"></span>
-          <h1>Dashboard</h1>
-          <span class="title-decorator"></span>
-        </div>
-        <p>Panoramica completa del tuo ricettario digitale.</p>
-      </header>
-
-      <section class="adm-nav-section">
-        <div class="custom-dropdown">
-          <button class="dropdown-trigger">
-            <span>📊 Dashboard Admin</span>
-            <span class="arrow">▼</span>
-          </button>
-          <ul class="dropdown-menu">
-            <li>
-              <a routerLink="/admin/moderation">
-                <span class="icon">🛡️</span> Moderazione Ricette
-              </a>
-            </li>
-            <li>
-              <a routerLink="/admin/users">
-                <span class="icon">👥</span> Gestione Community
-              </a>
-            </li>
-            <li>
-              <a routerLink="/admin/comment-moderation">
-                <span class="icon">💬</span> Moderazione Commenti
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="adm-stats-section">
-        <div class="adm-stats-grid">
-
-          <article class="adm-stat-card">
-            <figure class="adm-stat-icon-wrapper">👥</figure>
-            <div class="adm-stat-details">
-              <h3>Utenti Totali</h3>
-              <data class="adm-stat-value">{{ stats.users }}</data>
-            </div>
-          </article>
-
-          <article class="adm-stat-card">
-            <figure class="adm-stat-icon-wrapper">🥗</figure>
-            <div class="adm-stat-details">
-              <h3>Ricette</h3>
-              <data class="adm-stat-value">{{ stats.recipes }}</data>
-            </div>
-          </article>
-
-          <article class="adm-stat-card adm-chart-card">
-            <div class="adm-chart-header">
-              <div class="adm-stat-details">
-                <h3>DIFFICOLTA' RICETTE</h3>
-              </div>
-            </div>
-
-            <div class="adm-chart-wrapper">
-              <canvas id="difficultyChart"></canvas>
-            </div>
-          </article>
-
-
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <app-footer></app-footer>
-</div>
-</html>
+  <div class="split">
+    <section class="surface surface--pad" aria-labelledby="h-chart">
+      <h2 id="h-chart">Ricette per difficoltà</h2>
+      @if (total > 0) {
+        <div class="chart"><canvas #chart role="img"
+          [attr.aria-label]="'Facile ' + (stats.facile ?? 0) + ', media ' + (stats.medio ?? 0) + ', difficile ' + (stats.difficile ?? 0)"></canvas></div>
+      } @else {
+        <p class="muted">Nessuna ricetta da mostrare.</p>
+      }
+    </section>
+    <section class="surface surface--pad" aria-labelledby="h-todo">
+      <h2 id="h-todo">Da fare</h2>
+      <ul class="todo">
+        <li><a routerLink="/admin/moderation"><app-icon name="clipboard" /> <span><strong>Revisiona le ricette</strong><small>Approva o scarta le bozze in attesa</small></span></a></li>
+        <li><a routerLink="/admin/comment-moderation"><app-icon name="message" /> <span><strong>Modera i commenti</strong><small>Rimuovi contenuti inappropriati</small></span></a></li>
+        <li><a routerLink="/admin/users"><app-icon name="users" /> <span><strong>Gestisci gli utenti</strong><small>Ruoli e account sospesi</small></span></a></li>
+      </ul>
+    </section>
+  </div>
+}

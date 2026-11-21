@@ -1,106 +1,49 @@
-<html lang="it">
-<head>
-  <title>Dettaglio Bozza | Moderazione</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<div class="page-wrapper">
-  <app-navbar></app-navbar>
-  <main class="det-page-container">
-    <div class="det-blob det-b1"></div>
-    <div class="det-blob det-b2"></div>
-    <div class="det-blob det-b3"></div>
+<a routerLink="/admin/moderation" class="back-link"><app-icon name="arrow-left" [size]="18" /> Coda di revisione</a>
 
-    <span class="det-sketch det-icon-1">🍲</span>
-    <span class="det-sketch det-icon-2">🧂</span>
-    <span class="det-sketch det-icon-3">🍷</span>
-    <span class="det-sketch det-icon-4">🥦</span>
-
-    <div class="det-particle det-p1"></div>
-    <div class="det-particle det-p2"></div>
-    <div class="det-particle det-p3"></div>
-
-    <div class="det-content-wrapper">
-      @if (loading) {
-        <div class="det-status-card">
-          <div class="det-loader">🍳</div>
-          <p>Lo Chef sta preparando i dettagli della bozza...</p>
-        </div>
-      }
-
-      @if (ricetta && !loading) {
-        <article class="det-card">
-          <div class="det-image-wrapper">
-            <img [src]="ricetta.immagineURL || 'assets/default-recipe.jpg'" [alt]="ricetta.titolo">
-            <span class="det-badge-diff">{{ ricetta.difficolta }}</span>
-          </div>
-
-          <div class="det-main-body">
-            <header class="det-header">
-              <div class="det-title-row">
-                <h1>{{ ricetta.titolo }}</h1>
-                <span class="status-badge-bozza">BOZZA IN REVISIONE</span>
-              </div>
-
-              <div class="det-meta">
-                <span class="det-meta-item">👨‍🍳 <strong>{{ ricetta.autore }}</strong></span>
-                <span class="det-meta-item">⏱️ <strong>{{ ricetta.tempoCottura }} min</strong></span>
-                <span class="det-meta-item">📂 <strong>{{ ricetta.categoria }}</strong></span>
-              </div>
-              <p class="det-description">{{ ricetta.descrizione }}</p>
-            </header>
-
-            <hr class="det-divider">
-
-            <div class="det-grid-info">
-              <section class="det-ingredients">
-                <h2><span class="icon">🛒</span> Ingredienti</h2>
-                <ul>
-                  @for (ing of ricetta.ingredienti; track ing.name) {
-                    <li>
-                      <span class="ing-qta">{{ ing.quantita }} {{ ing.unitaMis }}</span>
-                      <span class="ing-name">{{ ing.name }}</span>
-                    </li>
-                  }
-                </ul>
-              </section>
-
-              <section class="det-instructions">
-                <h2><span class="icon">📝</span> Preparazione</h2>
-                <p class="preparazione-testo">{{ ricetta.istruzioni }}</p>
-              </section>
-            </div>
-
-            <hr class="det-divider">
-
-            <footer class="det-actions">
-              <button class="btn-back" routerLink="/admin/moderation">⬅️ Torna alla Moderazione</button>
-
-              <div class="mod-buttons-group">
-                <button class="btn-reject" (click)="azioneEliminaBozza()">Scarta ❌</button>
-                <button class="btn-approve" (click)="azioneApprova()">Approva ✅</button>
-              </div>
-            </footer>
-          </div>
-        </article>
-      }
+@if (loading) {
+  <div class="skeleton" style="height: 20rem; border-radius: var(--r-lg)" aria-busy="true"></div>
+} @else if (error) {
+  <div class="state state--error" role="alert">
+    <span class="state__icon"><app-icon name="alert" [size]="28" /></span>
+    <h2>Bozza non disponibile</h2>
+    <p>{{ error }}</p>
+    <a routerLink="/admin/moderation" class="btn btn--primary">Torna alla coda</a>
+  </div>
+} @else if (ricetta; as r) {
+  <div class="review-bar surface">
+    <div>
+      <span class="chip chip--warning">In revisione</span>
+      <p>Controlla testo, foto e ingredienti prima di pubblicare.</p>
     </div>
-  </main>
-
-  @if(mostraConfermaEliminazioneBozza){
-    <div class="mod-overlay">
-      <div class="mod-modal-card">
-        <div class="mod-modal-icon">⚠️</div>
-        <h2>Eliminare Bozza?</h2>
-        <p>Stai scartando questa richiesta. Verrà rimossa definitivamente dalla coda di moderazione.</p>
-
-        <div class="mod-modal-actions">
-          <button class="btn-modal-cancel" (click)="annullaEliminazioneBozza()">Ripensaci</button>
-          <button class="btn-modal-confirm" (click)="confermaEliminazioneBozza()">Sì, scarta bozza</button>
-        </div>
-      </div>
+    <div class="cluster">
+      <button type="button" class="btn btn--danger-soft" (click)="confirmOpen = true">Scarta</button>
+      <button type="button" class="btn btn--primary" (click)="approva()" [disabled]="approving">
+        @if (approving) { <span class="spinner" aria-hidden="true"></span> } <app-icon name="check" [size]="18" /> Approva e pubblica
+      </button>
     </div>
-  }
-  <app-footer></app-footer>
-</div>
-</html>
+  </div>
+  @if (actionError) { <p class="alert" role="alert"><app-icon name="alert" [size]="18" /> {{ actionError }}</p> }
+
+  <article class="grid">
+    <div class="media">
+      @if (r.immagineURL) { <img [src]="r.immagineURL" [alt]="'Foto: ' + r.titolo" /> } @else { <div class="ph"></div> }
+    </div>
+    <div class="info">
+      <h2>{{ r.titolo }}</h2>
+      <p class="cluster meta">
+        <span class="chip chip--neutral">{{ r.categoria }}</span>
+        <span><app-icon name="clock" [size]="16" /> {{ r.tempoCottura }} min</span>
+        <app-difficulty [value]="r.difficolta" />
+        <span><app-icon name="chef-hat" [size]="16" /> {{ r.autore }}</span>
+      </p>
+      <p class="desc">{{ r.descrizione }}</p>
+      <h3>Ingredienti</h3>
+      <ul class="ing">@for (i of r.ingredienti; track $index) { <li><strong>{{ i.quantita }} {{ i.unitaMis }}</strong> {{ i.name }}</li> }</ul>
+      <h3>Preparazione</h3>
+      <ol class="steps">@for (s of steps; track $index) { <li>{{ s }}</li> }</ol>
+    </div>
+  </article>
+}
+
+<app-confirm-dialog [open]="confirmOpen" title="Scartare la bozza?" message="La ricetta verrà rimossa dalla coda di revisione e non sarà pubblicata."
+  confirmLabel="Scarta bozza" [busy]="rejecting" (confirm)="scarta()" (cancel)="confirmOpen = false" />

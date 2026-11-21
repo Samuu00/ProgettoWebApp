@@ -1,94 +1,64 @@
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 80px;
-  padding: 0 3rem;
-  background: transparent !important;
-  position: relative;
-  z-index: 1000;
-}
+:host { position: sticky; top: 0; z-index: 50; display: block; }
+.nav { background: var(--c-band); color: var(--c-band-text); --c-focus: #f5c518; }
+.nav__strip { height: 10px; background: var(--c-band) var(--tile) 0 -3px / 20px 20px; border-top: 1px solid rgb(255 255 255 / 0.12); }
+.nav__bar { display: flex; align-items: center; gap: var(--s-4); min-height: 4rem; flex-wrap: wrap; }
 
-.navbar-left, .navbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.brand { display: inline-flex; align-items: center; gap: var(--s-3); color: inherit; text-decoration: none; margin-right: auto; }
+.brand__mark { width: 2rem; height: 2rem; }
+.brand__name { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; }
 
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0.75rem 1.4rem;
-  border-radius: 16px;
-  font-weight: 800;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 1.1px;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: none;
-  font-family: 'Poppins', sans-serif;
-  white-space: nowrap;
+.nav__tools { display: flex; gap: var(--s-1); order: 2; }
+.nav__icon-btn {
+  display: grid; place-items: center; width: 2.5rem; height: 2.5rem;
+  border: 0; border-radius: var(--r-pill); background: transparent; color: inherit; cursor: pointer;
 }
+.nav__icon-btn:hover { background: rgb(255 255 255 / 0.12); }
 
-.home-btn, .dash-btn, .admin-btn {
-  background: white;
-  color: #1a202c;
-  border: 2px solid #1a202c;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+.nav__panel { display: none; order: 3; width: 100%; padding-bottom: var(--s-4); flex-direction: column; gap: var(--s-3); }
+.nav__panel.is-open { display: flex; }
+.nav__links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.nav__links a, .nav__guest > a:not(.btn) {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
+  color: var(--c-band-text-2); font-weight: 600; text-decoration: none;
 }
+.nav__links a:hover, .nav__guest > a:not(.btn):hover { color: #fff; background: rgb(255 255 255 / 0.1); }
+.nav__links a.is-active { color: #fff; background: rgb(255 255 255 / 0.14); box-shadow: inset 0 -2px 0 var(--c-accent); }
+.nav__guest { display: flex; align-items: center; gap: var(--s-2); order: 2; }
 
-.active-link {
-  background: #1a202c !important; /* Forza il nero */
-  color: white !important;
-  border-color: #1a202c !important;
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2) !important;
+.usermenu { position: relative; }
+.usermenu__trigger {
+  display: flex; align-items: center; gap: var(--s-2); width: 100%;
+  padding: var(--s-1); padding-right: var(--s-3); border: 0; border-radius: var(--r-pill);
+  background: rgb(255 255 255 / 0.08); color: inherit; cursor: pointer; font-weight: 600;
 }
+.usermenu__trigger:hover { background: rgb(255 255 255 / 0.16); }
+.usermenu__pop {
+  margin-top: var(--s-2); padding: var(--s-2); min-width: 15rem;
+  background: var(--c-surface); color: var(--c-text); border: 1px solid var(--c-border);
+  border-radius: var(--r-lg); box-shadow: var(--sh-3); --c-focus: var(--c-primary);
+}
+.usermenu__who { display: flex; flex-direction: column; padding: var(--s-2) var(--s-3) var(--s-3); border-bottom: 1px solid var(--c-border); margin-bottom: var(--s-2); }
+.usermenu__who span { font-size: var(--fs-xs); color: var(--c-text-3); overflow-wrap: anywhere; }
+.usermenu__pop a, .usermenu__pop button {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%;
+  padding: var(--s-2) var(--s-3); border: 0; border-radius: var(--r-md);
+  background: none; color: var(--c-text); font-weight: 600; text-decoration: none; cursor: pointer; text-align: left;
+}
+.usermenu__pop a:hover, .usermenu__pop button:hover { background: var(--c-surface-2); }
 
-.nav-btn:hover:not(.active-link):not(.logout-btn) {
-  background: #f7fafc;
-  transform: translateY(-4px) scale(1.02);
+@media (min-width: 60rem) {
+  .nav__burger { display: none; }
+  .nav__tools { order: 4; }
+  .nav__panel, .nav__panel.is-open { display: flex; flex-direction: row; align-items: center; width: auto; padding: 0; gap: var(--s-4); order: 1; }
+  .nav__links { flex-direction: row; }
+  .usermenu__trigger { width: auto; }
+  .usermenu__pop { position: absolute; right: 0; top: 100%; }
 }
-
-.logout-btn {
-  background: #dc2626;
-  color: white;
-  box-shadow: 0 8px 15px rgba(220, 38, 38, 0.2);
+@media (max-width: 59.99rem) {
+  .nav__bar { gap: var(--s-2); }
+  .nav__guest { gap: var(--s-1); }
+  .nav__guest > a:not(.btn) { padding-inline: var(--s-2); }
+  .nav__guest .btn { padding-inline: var(--s-3); }
 }
-
-.nav-btn:hover {
-  transform: translateY(-4px) scale(1.02);
-}
-
-.home-btn:hover {
-  background: #ed8936;
-  box-shadow: 0 12px 20px rgba(237, 137, 54, 0.3);
-}
-
-.dash-btn:hover, .admin-btn:hover {
-  background: #1a202c;
-  color: white;
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-}
-
-.logout-btn:hover {
-  background: #b91c1c;
-  box-shadow: 0 12px 20px rgba(220, 38, 38, 0.4);
-}
-
-.btn-icon {
-  font-size: 1.1rem;
-}
-
-@media (max-width: 900px) {
-  .navbar {
-    padding: 0 1rem;
-    height: 70px;
-  }
-  .nav-btn {
-    padding: 0.6rem 0.9rem;
-    font-size: 0.7rem;
-    gap: 6px;
-  }
-}
+@media (max-width: 24rem) { .brand__name { font-size: 1.0625rem; } .brand { gap: var(--s-2); } }

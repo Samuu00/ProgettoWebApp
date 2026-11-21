@@ -1,70 +1,126 @@
 import { Routes } from '@angular/router';
-
-// Auth / Utente
-import { Login } from './components/auth/login/login';
-import { Register } from './components/auth/register/register';
-import { Profile } from './components/auth/profile/profile';
-import { Dashboard } from './components/admin/dashboard/dashboard';
-import { ForgotPassword } from './components/auth/forgot-password/forgot-password';
-import { ResetPassword } from './components/auth/reset-password/reset-password';
-import { ResetPasswordGuard } from './guards/resetPasswordGuard';
-
-// Ricette
-import { RecipeList } from './components/recipes/recipe-list/recipe-list';
-import { RecipeDetail } from './components/recipes/recipe-detail/recipe-detail';
-import { RecipeForm } from './components/recipes/recipe-form/recipe-form';
-import { Favorites } from './components/recipes/favorites/favorites';
-
-// Admin
-import { authGuard } from './guards/auth-guard';
+import { authGuard, guestGuard } from './guards/auth-guard';
 import { AdminGuard } from './guards/adminGuard';
-import { AdminDashboard } from './components/admin/admin-dashboard/admin-dashboard';
-import { UserManagement } from './components/admin/user-management/user-management';
-import { RecipeModeration } from './components/admin/recipe-moderation/recipe-moderation';
-import { PendingRecipeDetail } from './components/admin/pending-recipe-detail/pending-recipe-detail';
+import { ResetPasswordGuard } from './guards/resetPasswordGuard';
+import { RecipeList } from './components/recipes/recipe-list/recipe-list';
+import { Login } from './components/auth/login/login';
 
-// notFound
-import { NotFound } from './components/shared/not-found/not-found';
-import { AboutUs } from './components/shared/about-page/about-page';
-import { Privacy } from './components/shared/privacy/privacy-page';
-import { CommentModeration } from './components/admin/comment-moderation/comment-moderation';
+const t = (page: string) => `${page} · Ricettario`;
 
 export const routes: Routes = [
-  // Auth ---
-  { path: '', component: Login },
-  { path: 'login', component: Login },
-  { path: 'forgot-password', component: ForgotPassword },
-  { path: 'register', component: Register },
-  { path: 'about-page', component: AboutUs },
-  { path: 'privacy-page', component: Privacy },
+  { path: '', pathMatch: 'full', redirectTo: 'recipe-list' },
 
-  // --- ROTTE RESET PASSWORD CON TOKEN VALIDO (Protette da ResetPasswordGuard) ---
-  { path: 'reset-password/:token', component: ResetPassword, canActivate: [ResetPasswordGuard] },
+  // --- Pubbliche / ospiti ---
+  { path: 'login', component: Login, canActivate: [guestGuard], title: t('Accedi') },
+  {
+    path: 'register',
+    loadComponent: () => import('./components/auth/register/register').then((m) => m.Register),
+    canActivate: [guestGuard],
+    title: t('Crea un account'),
+  },
+  {
+    path: 'forgot-password',
+    loadComponent: () => import('./components/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
+    title: t('Recupera password'),
+  },
+  {
+    path: 'reset-password/:token',
+    loadComponent: () => import('./components/auth/reset-password/reset-password').then((m) => m.ResetPassword),
+    canActivate: [ResetPasswordGuard],
+    title: t('Nuova password'),
+  },
+  {
+    path: 'about-page',
+    loadComponent: () => import('./components/shared/about-page/about-page').then((m) => m.AboutUs),
+    title: t('Chi siamo'),
+  },
+  {
+    path: 'privacy-page',
+    loadComponent: () => import('./components/shared/privacy/privacy-page').then((m) => m.Privacy),
+    title: t('Privacy'),
+  },
 
-  // --- ROTTE UTENTE AUTENTICATO (Protette da authGuard) ---
-  { path: 'profile', component: Profile, canActivate: [authGuard] },
-  { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
-  { path: 'favorites', component: Favorites, canActivate: [authGuard] },
-  { path: 'recipe-create', component: RecipeForm, canActivate: [authGuard] },
-  { path: 'recipe-edit/:id', component: RecipeForm, canActivate: [authGuard] },
-  { path: 'recipe/:id', component: RecipeDetail , canActivate: [authGuard] },
-  { path: 'recipe-list',  component: RecipeList , canActivate: [authGuard] },
+  // --- Utente autenticato ---
+  { path: 'recipe-list', component: RecipeList, canActivate: [authGuard], title: t('Ricette') },
+  {
+    path: 'recipe/:id',
+    loadComponent: () => import('./components/recipes/recipe-detail/recipe-detail').then((m) => m.RecipeDetail),
+    canActivate: [authGuard],
+    title: t('Ricetta'),
+  },
+  {
+    path: 'recipe-create',
+    loadComponent: () => import('./components/recipes/recipe-form/recipe-form').then((m) => m.RecipeForm),
+    canActivate: [authGuard],
+    title: t('Nuova ricetta'),
+  },
+  {
+    path: 'recipe-edit/:id',
+    loadComponent: () => import('./components/recipes/recipe-form/recipe-form').then((m) => m.RecipeForm),
+    canActivate: [authGuard],
+    title: t('Modifica ricetta'),
+  },
+  {
+    path: 'favorites',
+    loadComponent: () => import('./components/recipes/favorites/favorites').then((m) => m.Favorites),
+    canActivate: [authGuard],
+    title: t('Preferiti'),
+  },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./components/admin/dashboard/dashboard').then((m) => m.Dashboard),
+    canActivate: [authGuard],
+    title: t('La mia cucina'),
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./components/auth/profile/profile').then((m) => m.Profile),
+    canActivate: [authGuard],
+    title: t('Profilo'),
+  },
 
-  // --- ROTTE PROTETTE ADMIN ---
+  // --- Admin (guard su padre e figli) ---
   {
     path: 'admin',
     canActivate: [AdminGuard],
+    canActivateChild: [AdminGuard],
+    loadComponent: () => import('./components/admin/admin-layout/admin-layout').then((m) => m.AdminLayout),
     children: [
-      { path: 'dashboard', component: AdminDashboard },
-      { path: 'users', component: UserManagement },
-      { path: 'moderation', component: RecipeModeration },
-      { path: 'comment-moderation', component: CommentModeration},
-      { path: 'pending-recipe/:id', component: PendingRecipeDetail },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
-    ]
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./components/admin/admin-dashboard/admin-dashboard').then((m) => m.AdminDashboard),
+        title: t('Admin · Panoramica'),
+      },
+      {
+        path: 'moderation',
+        loadComponent: () => import('./components/admin/recipe-moderation/recipe-moderation').then((m) => m.RecipeModeration),
+        title: t('Admin · Ricette'),
+      },
+      {
+        path: 'pending-recipe/:id',
+        loadComponent: () =>
+          import('./components/admin/pending-recipe-detail/pending-recipe-detail').then((m) => m.PendingRecipeDetail),
+        title: t('Admin · Revisione'),
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./components/admin/user-management/user-management').then((m) => m.UserManagement),
+        title: t('Admin · Utenti'),
+      },
+      {
+        path: 'comment-moderation',
+        loadComponent: () =>
+          import('./components/admin/comment-moderation/comment-moderation').then((m) => m.CommentModeration),
+        title: t('Admin · Commenti'),
+      },
+    ],
   },
 
-  // --- PAGINA ERRORE ---
-  { path: '404', component: NotFound },
-  { path: '**', redirectTo: '404' }
+  {
+    path: '404',
+    loadComponent: () => import('./components/shared/not-found/not-found').then((m) => m.NotFound),
+    title: t('Pagina non trovata'),
+  },
+  { path: '**', redirectTo: '404' },
 ];

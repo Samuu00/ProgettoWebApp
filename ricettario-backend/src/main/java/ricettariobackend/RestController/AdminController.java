@@ -3,21 +3,24 @@ package ricettariobackend.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ricettariobackend.DTO.RicettaDTO;
-import ricettariobackend.Entity.Utenti;
+import ricettariobackend.DTO.UtentiDTO;
 import ricettariobackend.Service.AdminService;
-import ricettariobackend.Service.StatsService;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "http://localhost:4200")
 public class AdminController {
 
-    private AdminService adminService = new AdminService();
+    // Accesso consentito solo agli ADMIN: vedi interceptor in Utility/WebConfig.
+    private final AdminService adminService;
+
+    public AdminController(AdminService adminService) {
+        this.adminService = adminService;
+    }
 
     @GetMapping("/users")
-    public ResponseEntity<List<Utenti>> getAllUsers() {
+    public ResponseEntity<List<UtentiDTO>> getAllUsers() {
         return ResponseEntity.ok(adminService.getAllUsers());
     }
 
@@ -62,13 +65,7 @@ public class AdminController {
 
     @GetMapping("/moderation/{id}")
     public ResponseEntity<RicettaDTO> getPendingRecipesById(@PathVariable("id") int id) {
-        try{
-            RicettaDTO ricetta = adminService.getPendingRecipeById(id);
-            return ResponseEntity.ok(ricetta);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.ok(adminService.getPendingRecipeById(id));
     }
 
     @PutMapping("/moderation/{id}/approve")

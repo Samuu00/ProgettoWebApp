@@ -2,9 +2,7 @@ package ricettariobackend.Service;
 
 import org.springframework.stereotype.Service;
 import ricettariobackend.DAO.StatsDAO;
-import ricettariobackend.DAO.StatsDAOImpl;
 import ricettariobackend.DTO.DifficultyStatsDTO;
-import ricettariobackend.Proxy.StatsDAOProxy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +11,11 @@ import java.util.Map;
 @Service
 public class StatsService {
 
-    private StatsDAO statsDAO = new StatsDAOProxy();
+    private final StatsDAO statsDAO;
+
+    public StatsService(StatsDAO statsDAO) {
+        this.statsDAO = statsDAO;
+    }
 
     public List<DifficultyStatsDTO> getDifficultyStats() {
 

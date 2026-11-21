@@ -1,72 +1,56 @@
 package ricettariobackend.Service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ricettariobackend.DAO.CommentiDAO;
-import ricettariobackend.DAO.UtenteDAO;
 import ricettariobackend.DTO.CommentDTO;
 import ricettariobackend.Entity.Commento;
 import ricettariobackend.Entity.Utenti;
-import ricettariobackend.Proxy.CommentiDAOProxy;
-import ricettariobackend.Proxy.UtenteDAOProxy;
+import ricettariobackend.Utility.CurrentUser;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+@Service
 public class CommentiService {
 
-    private CommentiDAO commentiDAO = new CommentiDAOProxy();
-    private UtenteDAO utenteDAO = new UtenteDAOProxy();
+    private final CommentiDAO commentiDAO;
+
+    public CommentiService(CommentiDAO commentiDAO) {
+        this.commentiDAO = commentiDAO;
+    }
 
     public List<CommentDTO> getCommentiByRicetta(int idRicetta) {
-        List<Commento> entities = commentiDAO.findByRecipeId(idRicetta);
-
-        return entities.stream().map(c -> {
-            CommentDTO dto = new CommentDTO();
-            dto.setId(c.getId());
-            dto.setContent(c.getContenuto());
-            dto.setAuthUsername(c.getUsername());
-            dto.setCreateDate(String.valueOf(c.getDatapub()));
-            dto.setRecipeID(c.getRicetta());
-            return dto;
-        }).toList();
+        return commentiDAO.findByRecipeId(idRicetta).stream().map(CommentDTO::new).toList();
     }
 
-    public boolean deleteCommento(int id) {
-        return commentiDAO.delete(id);
+    /** Solo l'autore del commento o un admin possono eliminarlo. */
+    public void deleteCommento(int id, Utenti utente) {
+        Commento c = commentiDAO.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        CurrentUser.requireOwnerOrAdmin(utente, c.getAutore());
+        commentiDAO.delete(id);
     }
 
-    public CommentDTO addCommentoAndReturn(CommentDTO dto) {
+    /** L'autore è sempre l'utente autenticato, mai quello indicato nel body. */
+    public CommentDTO addCommentoAndReturn(CommentDTO dto, Utenti autore) {
+        if (dto == null || dto.getRecipeID() == null || dto.getContent() == null || dto.getContent().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Commento vuoto");
+        }
         Commento c = new Commento();
         c.setContenuto(dto.getContent());
         c.setRicetta(dto.getRecipeID());
+        c.setAutore(autore.getId());
 
-        try {
-            Optional<Utenti> utenteOpt = utenteDAO.findByUsername(dto.getAuthUsername());
+        if (!commentiDAO.save(c)) return null;
 
-            if (utenteOpt.isPresent()) {
-                c.setAutore(utenteOpt.get().getId());
-
-                if (commentiDAO.save(c)) {
-
-                    dto.setId(c.getId());
-                    dto.setCreateDate(c.getDatapub());
-                    return dto;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        dto.setId(c.getId());
+        dto.setCreateDate(c.getDatapub());
+        dto.setAuthUsername(autore.getUsername());
+        return dto;
     }
-//af
+
     public List<CommentDTO> getAllComments() {
-        List<Commento> commenti = commentiDAO.findAll();
-        List<CommentDTO> commentiDTO = new ArrayList<>();
-        for(Commento c:commenti)
-        {
-            CommentDTO cDTO = new CommentDTO(c);
-            commentiDTO.add(cDTO);
-        }
-        return commentiDTO;
+        return commentiDAO.findAll().stream().map(CommentDTO::new).toList();
     }
 }

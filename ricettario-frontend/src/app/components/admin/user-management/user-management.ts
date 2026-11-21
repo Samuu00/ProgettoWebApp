@@ -1,87 +1,89 @@
-import { Component, OnInit, HostListener, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/adminService';
+import { AuthService } from '../../../services/authService';
+import { httpErrorText } from '../../../services/http-error';
 import { Utente } from '../../../models/user';
-import { Navbar } from '../../shared/navbar/navbar';
-import { Footer } from '../../shared/footer/footer';
-import { RouterModule } from '@angular/router';
+import { Icon } from '../../shared/icon/icon';
 
 @Component({
   selector: 'app-user-management',
-  standalone: true,
-  imports: [Navbar, Footer, RouterModule],
+  imports: [FormsModule, Icon],
   templateUrl: './user-management.html',
   styleUrl: './user-management.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserManagement implements OnInit {
+  private readonly adminService = inject(AdminService);
+  private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   utenti: Utente[] = [];
-  loading: boolean = false;
-  activeDropdownId: number | null = null;
+  query = '';
+  loading = false;
+  error = '';
+  actionError = '';
+  busy = new Set<number>();
 
-  constructor(private adminService: AdminService, private cdr: ChangeDetectorRef) {}
-
-  ngOnInit() { this.caricaListaUtenti(); }
-
-  @HostListener('document:click')
-  closeDropdowns() {
-    this.activeDropdownId = null;
+  ngOnInit(): void {
+    this.caricaListaUtenti();
   }
 
-  toggleDropdown(userId: number, event: Event) {
-    event.stopPropagation();
-    this.activeDropdownId = this.activeDropdownId === userId ? null : userId;
+  get filtrati(): Utente[] {
+    const q = this.query.trim().toLowerCase();
+    return q ? this.utenti.filter((u) => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) : this.utenti;
   }
 
-  caricaListaUtenti() {
+  /** Un admin non puo' bloccare o declassare se stesso dalla UI. */
+  isSelf(u: Utente): boolean {
+    return u.id === this.auth.getCurrentUser()?.id;
+  }
+
+  caricaListaUtenti(): void {
     this.loading = true;
-    this.adminService.getAllUser().subscribe({
+    this.error = '';
+    this.adminService.getAllUser().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
-        this.utenti = data;
+        this.utenti = data ?? [];
         this.loading = false;
-        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.cdr.markForCheck();
-      }
+        this.error = httpErrorText(err, 'Elenco utenti non disponibile.');
+      },
     });
   }
 
-  gesticiStatoUtente(userId: number) {
-    const user = this.utenti.find(u => u.id === userId);
-    if (!user) return;
-
-    const vecchioStato = user.stato;
-    user.stato = !vecchioStato;
-
-    this.adminService.toggleUserBlock(userId).subscribe({
-      error: () => {
-        user.stato = vecchioStato;
-        this.cdr.markForCheck();
-        alert('Impossibile aggiornare lo stato dell\'utente.');
-      }
+  /** `stato === true` significa account bloccato. Aggiornamento ottimistico con rollback. */
+  toggleBlocco(user: Utente): void {
+    if (this.busy.has(user.id)) return;
+    const prima = user.stato;
+    user.stato = !prima;
+    this.busy.add(user.id);
+    this.actionError = '';
+    this.adminService.toggleUserBlock(user.id).subscribe({
+      next: () => this.busy.delete(user.id),
+      error: (err) => {
+        user.stato = prima;
+        this.busy.delete(user.id);
+        this.actionError = httpErrorText(err, `Impossibile aggiornare lo stato di ${user.username}.`);
+      },
     });
   }
 
-  selezionaRuolo(user: Utente, nuovoRuolo: 'STANDARD' | 'ADMIN') {
-    if (user.ruolo === nuovoRuolo) {
-      this.activeDropdownId = null;
-      return;
-    }
-
-    const vecchioRuolo = user.ruolo;
+  cambiaRuolo(user: Utente, nuovoRuolo: Utente['ruolo']): void {
+    if (user.ruolo === nuovoRuolo) return;
+    const prima = user.ruolo;
     user.ruolo = nuovoRuolo;
-    this.activeDropdownId = null;
-
-    this.adminService.updateUserRole(user.id!, nuovoRuolo).subscribe({
-      next: () => this.cdr.markForCheck(),
-      error: () => {
-
-        user.ruolo = vecchioRuolo;
-        this.cdr.markForCheck();
-        alert('Errore durante il cambio ruolo.');
-      }
+    this.busy.add(user.id);
+    this.actionError = '';
+    this.adminService.updateUserRole(user.id, nuovoRuolo).subscribe({
+      next: () => this.busy.delete(user.id),
+      error: (err) => {
+        user.ruolo = prima;
+        this.busy.delete(user.id);
+        this.actionError = httpErrorText(err, `Cambio ruolo di ${user.username} non riuscito.`);
+      },
     });
   }
 }

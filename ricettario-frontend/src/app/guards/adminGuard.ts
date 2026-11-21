@@ -1,16 +1,13 @@
 import { inject } from '@angular/core';
-import {CanActivateFn, Router} from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/authService';
 
-export const AdminGuard: CanActivateFn = (route, state) => {
-  const authService = inject(AuthService);
+/** Blocca la UI admin ai non-admin. Il controllo vero resta lato backend. */
+export const AdminGuard: CanActivateFn = (_route, state) => {
+  const auth = inject(AuthService);
   const router = inject(Router);
-
-  if(authService.isLogged() && authService.isAdmin()){
-    return true;
-  }else{
-    const target = authService.isLogged() ? ['/recipes'] : ['/login'];
-    router.navigate(target);
-    return false;
+  if (!auth.isLogged()) {
+    return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
   }
-}
+  return auth.isAdmin() ? true : router.createUrlTree(['/recipe-list']);
+};

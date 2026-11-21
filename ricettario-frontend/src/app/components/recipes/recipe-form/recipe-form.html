@@ -1,128 +1,125 @@
-<html lang="it">
-<head>
-  <title>Recipe Form | Crea e carica la tua ricetta</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<div class="page-wrapper">
-  <app-navbar></app-navbar>
-  <main class="rf-page-container">
-    <div class="rf-blob rf-b1"></div>
-    <div class="rf-blob rf-b2"></div>
-    <div class="rf-blob rf-b3"></div>
+<div class="container container--narrow page">
+  <a [routerLink]="isEditMode ? ['/recipe', recipeId] : ['/dashboard']" class="back-link">
+    <app-icon name="arrow-left" [size]="18" /> {{ isEditMode ? 'Torna alla ricetta' : 'La mia cucina' }}
+  </a>
 
-    <span class="rf-sketch rf-icon-1">✍️</span>
-    <span class="rf-sketch rf-icon-2">🥣</span>
-    <span class="rf-sketch rf-icon-3">🔥</span>
-
-    <div class="rf-content-wrapper">
-      <section class="rf-card">
-        <header class="rf-header">
-          <div class="header-title-box">
-            <span class="title-decorator"></span>
-            <h1>{{ isEditMode ? 'Affina la Ricetta' : 'Nuova Creazione' }}</h1>
-            <span class="title-decorator"></span>
-          </div>
-          <p>{{ isEditMode ? 'Modifica gli ingredienti del tuo capolavoro' : 'Condividi il tuo talento culinario con il mondo' }}</p>
-        </header>
-
-        <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()" class="rf-form">
-          <div class="rf-grid-layout">
-
-            <div class="rf-column">
-              <div class="rf-group">
-                <label for="title">Titolo del Piatto</label>
-                <input id="title" type="text" formControlName="title" placeholder="Es. Risotto allo Zafferano" class="rf-input">
-              </div>
-
-              <div class="rf-group">
-                <label class="gourmet-label">Copertina del Piatto</label>
-                <div class="upload-container" [class.has-image]="imagePreview">
-                  <input type="file" id="fileInput" (change)="onFileSelected($event)" accept="image/*" hidden>
-                  <label for="fileInput" class="upload-trigger">
-                    @if (!imagePreview) {
-                      <div class="upload-content centered-bottom-content">
-                        <span class="upload-icon">📸</span>
-                        <p>Carica la foto della ricetta</p>
-                      </div>
-                    } @else {
-                      <div class="preview-wrapper">
-                        <img [src]="imagePreview" alt="Preview" class="gourmet-preview-img">
-                        <div class="change-overlay">
-                          <span>Cambia Foto</span>
-                        </div>
-                      </div>
-                    }
-                  </label>
-                </div>
-              </div>
-
-              <div class="rf-group">
-                <label for="description">Descrizione Breve</label>
-                <textarea id="description" rows="3" formControlName="description" placeholder="Un'introduzione invitante..." class="rf-input"></textarea>
-              </div>
-            </div>
-
-            <div class="rf-column">
-              <div class="rf-group">
-                <label for="ingredients">Ingredienti (uno per riga)</label>
-                <textarea id="ingredients" rows="5" formControlName="ingredients" placeholder="Es. 320g Riso, 1 bustina Zafferano..." class="rf-input"></textarea>
-              </div>
-
-              <div class="rf-group">
-                <label for="instructions">Passaggi della Preparazione</label>
-                <textarea id="instructions" rows="6" formControlName="instructions" placeholder="Descrivi i passaggi con cura..." class="rf-input"></textarea>
-              </div>
-
-              <div class="rf-row">
-                <div class="rf-group">
-                  <label class="gourmet-label">Difficoltà</label>
-                  <div class="gourmet-dropdown" (click)="toggleDifficulty()" [class.active]="isDiffOpen">
-                    <div class="dropdown-selected">
-                      {{ getDiffLabel() }}
-                      <span class="dropdown-arrow"></span>
-                    </div>
-                    <div class="dropdown-menu">
-                      <div class="dropdown-item" (click)="selectDifficulty('EASY')">🟢 Facile</div>
-                      <div class="dropdown-item" (click)="selectDifficulty('MEDIUM')">🟡 Media</div>
-                      <div class="dropdown-item" (click)="selectDifficulty('HARD')">🔴 Difficile</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="rf-group">
-                  <label for="prepTime">Tempo (min)</label>
-                  <input id="prepTime" type="number" formControlName="prepTime" min="1" class="rf-input">
-                </div>
-              </div>
-
-              <div class="rf-group">
-                <label for="category">Categoria</label>
-                <input id="category" type="text" formControlName="category" placeholder="Es. Primi Piatti" class="rf-input">
-              </div>
-            </div>
-          </div>
-
-          @if (errorMessaggio) {
-            <footer class="error-container">
-              <p class="error" role="alert">
-                <span class="error-icon">⚠️</span> {{ errorMessaggio }}
-              </p>
-            </footer>
-          }
-
-          <footer class="rf-actions">
-            <button type="button" class="rf-btn-secondary" routerLink="/recipe-list">Annulla</button>
-            <button type="submit" class="rf-btn-primary" [disabled]="recipeForm.invalid">
-              {{ isEditMode ? 'Aggiorna Ricetta' : 'Pubblica Ricetta' }}
-            </button>
-          </footer>
-        </form>
-      </section>
+  @if (submitted) {
+    <div class="state" role="status">
+      <span class="state__icon"><app-icon name="check" [size]="28" /></span>
+      <h1 class="h-state">{{ isEditMode ? 'Modifiche salvate' : 'Ricetta inviata!' }}</h1>
+      <p>Un moderatore la controllerà a breve: sarà visibile a tutti dopo l'approvazione.</p>
+      <div class="cluster">
+        <a routerLink="/dashboard" class="btn btn--primary">Vai alla mia cucina</a>
+        <a routerLink="/recipe-list" class="btn">Sfoglia le ricette</a>
+      </div>
     </div>
-  </main>
-  <app-footer></app-footer>
+  } @else if (loadError) {
+    <div class="state state--error" role="alert">
+      <span class="state__icon"><app-icon name="alert" [size]="28" /></span>
+      <h1 class="h-state">Ricetta non disponibile</h1>
+      <p>{{ loadError }}</p>
+      <a routerLink="/dashboard" class="btn btn--primary">Torna alla mia cucina</a>
+    </div>
+  } @else {
+    <header class="page-head">
+      <div>
+        <h1>{{ isEditMode ? 'Modifica ricetta' : 'Nuova ricetta' }}</h1>
+        <p>Scrivila come la racconteresti a un amico in cucina. I campi sono tutti obbligatori.</p>
+      </div>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate [attr.aria-busy]="loading">
+      <section class="block surface" aria-labelledby="s-base">
+        <h2 id="s-base">Il piatto</h2>
+
+        <div class="field">
+          <label for="title">Titolo</label>
+          <input id="title" class="input" formControlName="title" placeholder="Es. Risotto allo zafferano"
+                 [attr.aria-invalid]="invalid('title')" aria-describedby="title-err" />
+          @if (invalid('title')) { <p id="title-err" class="field-error">Inserisci un titolo di almeno 3 caratteri.</p> }
+        </div>
+
+        <div class="field">
+          <label for="description">Descrizione breve</label>
+          <textarea id="description" class="textarea" rows="3" formControlName="description"
+                    placeholder="Due righe per far venire l'acquolina." [attr.aria-invalid]="invalid('description')" aria-describedby="desc-err"></textarea>
+          @if (invalid('description')) { <p id="desc-err" class="field-error">Aggiungi una breve descrizione (max 500 caratteri).</p> }
+        </div>
+
+        <div class="grid-3">
+          <div class="field">
+            <label for="category">Categoria</label>
+            <input id="category" class="input" formControlName="category" placeholder="Es. Primi" list="cat-list"
+                   [attr.aria-invalid]="invalid('category')" aria-describedby="cat-err" />
+            <datalist id="cat-list">
+              <option value="Antipasti"></option><option value="Primi"></option><option value="Secondi"></option>
+              <option value="Contorni"></option><option value="Dolci"></option><option value="Lievitati"></option>
+            </datalist>
+            @if (invalid('category')) { <p id="cat-err" class="field-error">Indica una categoria.</p> }
+          </div>
+          <div class="field">
+            <label for="prepTime">Tempo (minuti)</label>
+            <input id="prepTime" class="input" type="number" inputmode="numeric" min="1" max="1440" formControlName="prepTime"
+                   [attr.aria-invalid]="invalid('prepTime')" aria-describedby="time-err" />
+            @if (invalid('prepTime')) { <p id="time-err" class="field-error">Tra 1 e 1440 minuti.</p> }
+          </div>
+          <div class="field">
+            <label for="difficulty">Difficoltà</label>
+            <select id="difficulty" class="select" formControlName="difficulty">
+              @for (d of difficulties; track d.value) { <option [value]="d.value">{{ d.label }}</option> }
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="block surface" aria-labelledby="s-photo">
+        <h2 id="s-photo">Foto</h2>
+        <label class="drop" [class.has-image]="form.value.image" for="fileInput" [attr.aria-invalid]="invalid('image')">
+          @if (form.value.image) {
+            <img [src]="form.value.image" alt="Anteprima della foto" />
+            <span class="drop__change"><app-icon name="upload" [size]="18" /> Cambia foto</span>
+          } @else {
+            <span class="drop__empty">
+              <app-icon name="image" [size]="32" />
+              <strong>Carica una foto del piatto</strong>
+              <span class="hint">JPG, PNG o WebP, massimo 2 MB</span>
+            </span>
+          }
+        </label>
+        <input type="file" id="fileInput" class="visually-hidden" accept="image/*" (change)="onFileSelected($event)" />
+        @if (imageError) { <p class="field-error" role="alert">{{ imageError }}</p> }
+        @else if (invalid('image')) { <p class="field-error">Serve una foto per pubblicare.</p> }
+      </section>
+
+      <section class="block surface" aria-labelledby="s-ing">
+        <h2 id="s-ing">Ingredienti e preparazione</h2>
+        <div class="field">
+          <label for="ingredients">Ingredienti</label>
+          <textarea id="ingredients" class="textarea mono" rows="6" formControlName="ingredients"
+                    placeholder="320 g riso carnaroli&#10;1 bustina zafferano&#10;sale" aria-describedby="ing-hint"
+                    [attr.aria-invalid]="invalid('ingredients')"></textarea>
+          <p id="ing-hint" class="hint">Uno per riga: quantità, unità, nome (es. «320 g riso»). Senza quantità diventa «q.b.».</p>
+          @if (invalid('ingredients')) { <p class="field-error">Aggiungi almeno un ingrediente.</p> }
+        </div>
+        <div class="field">
+          <label for="instructions">Preparazione</label>
+          <textarea id="instructions" class="textarea" rows="8" formControlName="instructions"
+                    placeholder="Tosta il riso per due minuti…" aria-describedby="ins-hint" [attr.aria-invalid]="invalid('instructions')"></textarea>
+          <p id="ins-hint" class="hint">Ogni riga diventa un passaggio numerato.</p>
+          @if (invalid('instructions')) { <p class="field-error">Descrivi almeno un passaggio.</p> }
+        </div>
+      </section>
+
+      <footer class="actions">
+        @if (errorMessaggio) { <p class="alert" role="alert"><app-icon name="alert" [size]="18" /> {{ errorMessaggio }}</p> }
+        <div class="cluster">
+          <a class="btn btn--ghost" [routerLink]="isEditMode ? ['/recipe', recipeId] : ['/dashboard']">Annulla</a>
+          <button type="submit" class="btn btn--primary" [disabled]="saving || loading">
+            @if (saving) { <span class="spinner" aria-hidden="true"></span> }
+            {{ isEditMode ? 'Salva modifiche' : 'Invia in revisione' }}
+          </button>
+        </div>
+      </footer>
+    </form>
+  }
 </div>
-</body>
-</html>

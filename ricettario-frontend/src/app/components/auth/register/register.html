@@ -1,146 +1,41 @@
-<html lang="it">
-<head>
-  <title>Register | Benvenuto!</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="register.css">
-</head>
-<div class="page-wrapper">
-  <main class="register-container">
-    <div class="blob b1"></div>
-    <div class="blob b2"></div>
-    <div class="blob b3"></div>
-    <div class="blob b4"></div>
-
-    <div class="particle p1"></div>
-    <div class="particle p2"></div>
-    <div class="particle p3"></div>
-    <div class="particle p4"></div>
-    <div class="particle p5"></div>
-
-    <span class="sketch icon-1">🥗</span>
-    <span class="sketch icon-2">🥕</span>
-    <span class="sketch icon-3">🍋</span>
-    <span class="sketch icon-4">🍲</span>
-    <span class="sketch icon-5">🍰</span>
-    <span class="sketch icon-6">🔪</span>
-
-    <div class="main-content-layout">
-
-      <section class="register-card">
-        <header>
-          <h1 id="register-title">Unisciti alla Cucina</h1>
-          <p>Crea il tuo profilo e inizia a salvare ricette</p>
-        </header>
-
-        <form (ngSubmit)="onRegister()" #registerForm="ngForm" novalidate>
-
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              [(ngModel)]="userData.username"
-              (input)="validateUsernameInline()"
-              required
-              placeholder="Scegli un nome utente"
-              autocomplete="username"
-            />
-            @if (inlineErrors.username) { <span class="inline-error">{{ inlineErrors.username }}</span> }
-          </div>
-
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              [(ngModel)]="userData.email"
-              (input)="validateEmailInline()"
-              [class.is-invalid]="inlineErrors.email"
-              required
-              placeholder="chef@gmail.com"
-            />
-            @if (inlineErrors.email) {
-              <span class="inline-error">{{ inlineErrors.email }}</span>
-            }
-          </div>
-
-          <div class="form-group">
-            <label for="password">Password</label>
-            <div class="password-wrapper">
-              <input
-                id="password"
-                name="password"
-                [type]="showPassword ? 'text' : 'password'"
-                [(ngModel)]="userData.password"
-                (input)="validatePasswordInline()"
-                (focus)="setStealingRecipe(true)"
-                (blur)="setStealingRecipe(false)"
-                required
-                placeholder="Minimo 8 caratteri"
-                autocomplete="new-password"
-              />
-              <button type="button" class="toggle-btn" (click)="togglePassword()">
-                {{ showPassword ? '🙈' : '👁️' }}
-              </button>
-            </div>
-            @if (inlineErrors.password) { <span class="inline-error">{{ inlineErrors.password }}</span> }
-          </div>
-
-          <div class="form-group">
-            <label for="confirmPassword">Conferma Password</label>
-            <div class="password-wrapper">
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                [type]="showConfirmPassword ? 'text' : 'password'"
-                [(ngModel)]="userData.confirmPassw"
-                (input)="validateConfirmPasswordInline()"
-                (focus)="setStealingRecipe(true)"
-                (blur)="setStealingRecipe(false)"
-                required
-                placeholder="Ripeti la password"
-                autocomplete="new-password"
-              />
-              <button type="button" class="toggle-btn" (click)="toggleConfirmPassword()">
-                {{ showConfirmPassword ? '🙈' : '👁️' }}
-              </button>
-            </div>
-            @if (inlineErrors.confirmPassw) { <span class="inline-error">{{ inlineErrors.confirmPassw }}</span> }
-          </div>
-
-          <button type="submit" [disabled]="isFormInvalid()">
-            Crea Account
-          </button>
-
-          @if (errorMess) {
-            <div class="error-container">
-              <p class="error" role="alert">⚠️ {{ errorMess }}</p>
-            </div>
-          }
-        </form>
-
-        <footer class="register-footer">
-          <nav>
-            <p>
-              Hai già un account?
-              <a routerLink="/login">Accedi qui</a>
-            </p>
-          </nav>
-        </footer>
-      </section>
-
-      <div class="chef-side-container" [class.hiding]="isStealingRecipe">
-        <div class="chef-animator" [style.transform]="'rotateY(' + lookRotation + 'deg) rotateZ(' + (lookRotation/2) + 'deg)'">
-          <img src="images/chef.svg" alt="Chef Gourmet" class="chef-img-external">
-        </div>
-      </div>
-
+<app-auth-shell heading="Crea il tuo account" sub="Gratis. Salva le ricette che ami e pubblica le tue." quote="Ogni famiglia ha una ricetta da tramandare.">
+  <form class="auth-form" (ngSubmit)="onRegister()" novalidate>
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" class="input" [(ngModel)]="userData.username" (blur)="touched.username = true"
+             autocomplete="username" [attr.aria-invalid]="!!show('username')" aria-describedby="u-err" />
+      @if (show('username')) { <p id="u-err" class="field-error">{{ show('username') }}</p> }
     </div>
-  </main>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" class="input" [(ngModel)]="userData.email" (blur)="touched.email = true"
+             autocomplete="email" inputmode="email" [attr.aria-invalid]="!!show('email')" aria-describedby="e-err" />
+      @if (show('email')) { <p id="e-err" class="field-error">{{ show('email') }}</p> }
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <input id="password" name="password" class="input" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="userData.password"
+               (blur)="touched.password = true" autocomplete="new-password" aria-describedby="pw-rules" [attr.aria-invalid]="!!show('password')" />
+        <button type="button" class="btn btn--ghost btn--icon btn--sm" (click)="showPassword = !showPassword"
+                [attr.aria-label]="showPassword ? 'Nascondi password' : 'Mostra password'" [attr.aria-pressed]="showPassword">
+          <app-icon [name]="showPassword ? 'eye-off' : 'eye'" [size]="18" />
+        </button>
+      </div>
+      <app-password-rules [value]="userData.password" />
+    </div>
+    <div class="field">
+      <label for="confirm">Conferma password</label>
+      <input id="confirm" name="confirm" class="input" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="userData.confirmPassw"
+             (blur)="touched.confirmPassw = true" autocomplete="new-password" [attr.aria-invalid]="!!show('confirmPassw')" aria-describedby="c-err" />
+      @if (show('confirmPassw')) { <p id="c-err" class="field-error">{{ show('confirmPassw') }}</p> }
+    </div>
 
-  <app-footer></app-footer>
-</div>
-</html>
+    @if (errorMess) { <p class="alert" role="alert"><app-icon name="alert" [size]="18" /> {{ errorMess }}</p> }
+
+    <button type="submit" class="btn btn--primary btn--block" [disabled]="loading">
+      @if (loading) { <span class="spinner" aria-hidden="true"></span> } Crea account
+    </button>
+  </form>
+  <p class="auth-alt">Hai già un account? <a routerLink="/login">Accedi</a></p>
+</app-auth-shell>

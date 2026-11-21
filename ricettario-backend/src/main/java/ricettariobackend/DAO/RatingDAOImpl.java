@@ -1,14 +1,19 @@
 package ricettariobackend.DAO;
 
-import ricettariobackend.Database.DbConnection;
+import org.springframework.stereotype.Repository;
 import ricettariobackend.Entity.Ratings;
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class RatingDAOImpl implements RatingDAO {
 
-    public RatingDAOImpl() {
+    private final DataSource dataSource;
+
+    public RatingDAOImpl(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -18,7 +23,7 @@ public class RatingDAOImpl implements RatingDAO {
             return false;
         }
         String sql = "INSERT INTO ratings (utente, ricetta, voto) VALUES (?, ?, ?)";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, rating.getUtente());
@@ -37,7 +42,7 @@ public class RatingDAOImpl implements RatingDAO {
         List<Ratings> ratingsList = new ArrayList<>();
         String sql = "SELECT * FROM ratings WHERE ricetta = ?";
 
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
@@ -61,7 +66,7 @@ public class RatingDAOImpl implements RatingDAO {
     public double averageRating(int id) {
         String sql = "SELECT AVG(voto) as media FROM ratings WHERE ricetta = ?";
 
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
@@ -81,7 +86,7 @@ public class RatingDAOImpl implements RatingDAO {
     public boolean gaveRating(int utenteId, int ricettaId) {
         String sql = "SELECT 1 FROM ratings WHERE utente = ? AND ricetta = ?";
 
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, utenteId);

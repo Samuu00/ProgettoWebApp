@@ -1,30 +1,23 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/authService';
 import { of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { AuthService } from '../services/authService';
 
-export const ResetPasswordGuard: CanActivateFn = (route, state) => {
+const JWT_PATTERN = /^[\w-]+\.[\w-]+\.[\w-]+$/;
+
+export const ResetPasswordGuard: CanActivateFn = (route) => {
   const router = inject(Router);
   const authService = inject(AuthService);
   const token = route.paramMap.get('token');
+  const invalid = router.createUrlTree(['/forgot-password'], { queryParams: { invalid: 1 } });
 
-  if (!token || token === ':token' || token.length < 10) {
-    router.navigate(['/login']);
-    return false;
-  }
-
-  const tokenPattern = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+?)$/;
-  if (!tokenPattern.test(token)) {
-    router.navigate(['/login']);
-    return false;
+  if (!token || !JWT_PATTERN.test(token)) {
+    return invalid;
   }
 
   return authService.verifyResetToken(token).pipe(
     map(() => true),
-    catchError(() => {
-      router.navigate(['/login']);
-      return of(false);
-    })
+    catchError(() => of(invalid))
   );
 };

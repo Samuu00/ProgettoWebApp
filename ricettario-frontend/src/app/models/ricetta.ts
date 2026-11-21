@@ -1,8 +1,9 @@
 export interface Ricetta {
-  id? : number;
-  titolo : string;
+  id?: number;
+  titolo: string;
   descrizione: string;
   autore: string;
+  /** Impostato dal backend in base al token; non va inviato. */
   idAutore?: number;
   ingredienti: Ingredienti[];
   istruzioni: string;
@@ -10,27 +11,27 @@ export interface Ricetta {
   categoria: string;
   difficolta: Difficolta;
   immagineURL: string;
-  dataCreaz: string;
+  dataCreaz?: string;
   status: Stato;
 }
 
-export interface Ingredienti{
+export interface Ingredienti {
   name: string;
   quantita: number;
   unitaMis: string;
-  carboidrati: number;
-  grassi: number;
-  proteine: number;
+  carboidrati?: number;
+  grassi?: number;
+  proteine?: number;
 }
 
-export enum Difficolta{
-  FACILE = "FACILE",
-  MEDIO = "MEDIO",
-  DIFFICILE = "DIFFICILE"
+export enum Difficolta {
+  FACILE = 'FACILE',
+  MEDIO = 'MEDIO',
+  DIFFICILE = 'DIFFICILE',
 }
 
-export enum Stato{
+export enum Stato {
   BOZZA = 'BOZZA',
   SCARTATA = 'SCARTATA',
-  APPROVATA = 'APPROVATA'
+  APPROVATA = 'APPROVATA',
 }

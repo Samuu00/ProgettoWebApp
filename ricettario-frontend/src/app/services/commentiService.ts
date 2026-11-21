@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Commenti } from '../models/comment';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CommentService {
-  private apiUrl = 'http://localhost:8080/api/commenti';
-
-  constructor(private http: HttpClient) {}
+  private apiUrl = `${environment.apiUrl}/commenti`;
+  private http = inject(HttpClient);
 
   getAllComments(): Observable<Commenti[]> {
     return this.http.get<Commenti[]>(`${this.apiUrl}/all`);
@@ -18,24 +18,8 @@ export class CommentService {
   }
 
   addComment(recipeId: number, content: string): Observable<Commenti> {
-    const userStr = localStorage.getItem('user');
-    let username = 'Anonimo';
-    if (userStr) {
-      try {
-        const userObj = JSON.parse(userStr);
-        username = userObj.username || 'Anonimo';
-      } catch (e) {
-        username = userStr;
-      }
-    }
-
-    const commentoDto = {
-      content: content,
-      recipeID: recipeId,
-      authUsername: username
-    };
-
-    return this.http.post<Commenti>(`${this.apiUrl}/add`, commentoDto);
+    // L'autore viene ricavato dal token lato backend.
+    return this.http.post<Commenti>(`${this.apiUrl}/add`, { content, recipeID: recipeId });
   }
 
   deleteComment(commentId: number): Observable<void> {
